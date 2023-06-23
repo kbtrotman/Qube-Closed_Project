@@ -181,7 +181,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 				_qlog->error("QUBE_FUSE::qfs_getattr: Failed to open path, Fullpath={} and path={}.", ptemp, path);
 				retstat = -errno;
 			} else {
-				_qlog->error("QUBE_FUSE::qfs_getattr: Stat-ed, Fullpath={} and path={}.", ptemp, path);
+				_qlog->debug("QUBE_FUSE::qfs_getattr: Stat-ed, Fullpath={} and path={}.", ptemp, path);
 				retstat = 0;
 			}
 
