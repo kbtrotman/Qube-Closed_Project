@@ -24,7 +24,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
         static struct fuse_operations qfs_operations_;
 		static struct qfs_state *qfs_data;
 		static std::string root_dir;
-		static char* last_full_path;
+		static char *last_full_path;
 
  		qube_fuse() {
 			// set the methods of the fuse_operations struct to the methods of the QubeFileSystem class
@@ -94,7 +94,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			settings.root_dir = new std::string(argv[argc-1]);
     		argv[argc-1] = settings.mount_point;
 			//argc--;
-			_qlog->debug("progname: {}  Root_dir: {}  Mount_point: {}.", settings.progname, settings.root_dir->c_str(), settings.mount_point);
+			_qlog->debug("QUBE_FUSE::run: progname: {}  Root_dir: {}  Mount_point: {}.", settings.progname, settings.root_dir->c_str(), settings.mount_point);
 			_qlog->flush();
 			settings.src_len = settings.root_dir->length();
 			settings.mnt_len = strlen(settings.mount_point);
@@ -102,20 +102,20 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			struct stat st;
 
 			if (::stat(settings.mount_point, &st) == -1) {
-				_qlog->error("Error: The mount point [{}] doesn't exist.", settings.mount_point);
+				_qlog->error("QUBE_FUSE::run: Error: The mount point [{}] doesn't exist.", settings.mount_point);
 				perror("stat");
 				return 1;
 			}
 			if (!(st.st_mode & S_IFDIR)) {
-				_qlog->error("Error: The mount point [{}] is not a directory.", settings.mount_point);
+				_qlog->error("QUBE_FUSE::run: Error: The mount point [{}] is not a directory.", settings.mount_point);
 				return 1;
 			}
 			if (::access(settings.mount_point, W_OK) == -1) {
-				_qlog->error("Error: The mount point [{}] is not accessible.", settings.mount_point);
+				_qlog->error("QUBE_FUSE::run: Error: The mount point [{}] is not accessible.", settings.mount_point);
 				perror("access");
 				return 1;
 			}
-			_qlog->info("Setting command-line defaults in [run] method with source=[{}] and mount=[{}]", settings.root_dir->c_str(), settings.mount_point);
+			_qlog->info("QUBE_FUSE::run: Setting command-line defaults in [run] method with source=[{}] and mount=[{}]", settings.root_dir->c_str(), settings.mount_point);
 			_qlog->flush();
 
 			qfs_data = (qfs_state*)malloc(sizeof(struct qfs_state));
@@ -129,14 +129,14 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			/* Open mount root for chrooting */
     		settings.src_fd = ::open(settings.root_dir->c_str(), O_RDONLY);
     		if (settings.src_fd == -1) {
-        		_qlog->error("Could not open source directory: {}.", settings.root_dir->c_str());
+        		_qlog->error("QUBE_FUSE::run: Could not open source directory: {}.", settings.root_dir->c_str());
         		return 1;
     		}
 
 			if (fchdir(settings.src_fd) == 0) {
-       			_qlog->debug("Current working directory changed to {}.", settings.root_dir->c_str());
+       			_qlog->debug("QUBE_FUSE::run: Current working directory changed to {}.", settings.root_dir->c_str());
     		} else {
-        		_qlog->error("Failed to change working directory to {}. Are we on the right file path?", settings.root_dir->c_str());
+        		_qlog->error("QUBE_FUSE::run: Failed to change working directory to {}. Are we on the right file path?", settings.root_dir->c_str());
     		}
 
 			_qlog->debug("QUBE_FUSE::run---[Leaving]--->.");
@@ -168,7 +168,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
     			return QFS_DATA;
 		}
 
-		static int qfs_getattr( const char* path, struct stat* stbuf, struct fuse_file_info *fi )
+		static int qfs_getattr( const char *path, struct stat *stbuf, struct fuse_file_info *fi )
 		{
 			_qlog->debug("QUBE_FUSE::qfs_getattr---[{}]--->", path);
 			int retstat = 0;
@@ -274,8 +274,23 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		static int qfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {return 0;}
 
 		static int qfs_open(const char *path, struct fuse_file_info *fi) {
-			_qlog->debug("QUBE_FUSE::qfs_open---[{}]--->", *path );
-			return 0;
+			_qlog->debug("QUBE_FUSE::qfs_open---[{}]--->", path );
+			int local_fh;
+			int res;
+
+			last_full_path = qfs_get_root_path(path);
+			_qlog->debug("QUBE_FUSE::qfs_open: Fullpath={} and path={}.", last_full_path, path);
+			local_fh = ::open(last_full_path, fi->flags);
+			if (local_fh == -1){
+				_qlog->error("QUBE_FUSE::qfs_create: Failed to open path [{}] with flags [{:d}].", path, fi->flags);
+				res = -errno;
+			} else {
+				_qlog->debug("QUBE_FUSE::qfs_create: opened path [{}] with result [{:d}].", path, local_fh);
+				res = 0;
+			}
+			fi->fh = local_fh;
+			_qlog->debug("QUBE_FUSE::qfs_open---[Leaving]--->");
+			return res;
 		}
 
 		static int qfs_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
@@ -387,7 +402,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			int res;
 
 			last_full_path = qfs_get_root_path(path);
-			_qlog->debug("Fullpath={} and path={}.", last_full_path, path);
+			_qlog->debug("QUBE_FUSE::qfs_statfs: Fullpath={} and path={}.", last_full_path, path);
 			res = ::statvfs(last_full_path, stbuf);
 			if (res == -1)
 				return -errno;
@@ -488,33 +503,33 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			fdflags = fuse_fill_dir_flags::FUSE_FILL_DIR_PLUS;
 
 			last_full_path = qfs_get_root_path(path);
-			_qlog->debug("Fullpath={} and path={}", last_full_path, path);
+			_qlog->debug("QUBE_FUSE::qfs_readdir: Fullpath={} and path={}", last_full_path, path);
 
 			dp = ::opendir(last_full_path);     //<------Needs to be changed to qfs_opendir.............
 			if (dp == NULL) {
-				_qlog->error("Failed to open directory: {}.", last_full_path);
+				_qlog->error("QUBE_FUSE::qfs_readdir: Failed to open directory: {}.", last_full_path);
 				return -errno;
 			}
 			int r = 0;
 
 			while ((de = ::readdir(dp)) != NULL) {
 				r++;
-				_qlog->debug("Adding entry r:{} with name: {} from dir list into buffer.", r, de->d_name);
+				_qlog->debug("QUBE_FUSE::qfs_readdir: Adding entry r:{} with name: {} from dir list into buffer.", r, de->d_name);
 				struct stat st = {};
 				st.st_ino = de->d_ino;
 				st.st_mode = de->d_type << 12;
 				last_full_path = qfs_get_root_path(de->d_name);
 				if (::lstat(last_full_path, &st) == -1) {
-					_qlog->error("Unable to stat path:{}", last_full_path);
+					_qlog->error("QUBE_FUSE::qfs_readdir: Unable to stat path:{}", last_full_path);
 					_qlog->flush();
                     break;
 				}
 
 				if (filler(buf, de->d_name, 0, 0, fdflags) !=0 ) {
-					_qlog->error("Failed to add entry to directory: {}.", last_full_path);
+					_qlog->error("QUBE_FUSE::qfs_readdir: Failed to add entry to directory: {}.", last_full_path);
 			//		break;
 				} else {
-					_qlog->debug("Added dir entry {} ino: {:d} mode: {}.", de->d_name, st.st_ino, st.st_mode);
+					_qlog->debug("QUBE_FUSE::qfs_readdir: Added dir entry {} ino: {:d} mode: {}.", de->d_name, st.st_ino, st.st_mode);
                 }
 			}
 			
