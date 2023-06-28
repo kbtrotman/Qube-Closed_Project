@@ -268,7 +268,13 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			return 0;
 		}
 
-		static int qfs_link(const char *path, const char *linkname) {return 0;}
+		static int qfs_link(const char *path, const char *linkname) {
+			_qlog->debug("QUBE_FUSE::qfs_link---[{}]---[{}]--->", path, linkname );
+
+			return 0;
+			_qlog->debug("QUBE_FUSE::qfs_link---[Leaving]--->");
+		}
+		
 		static int qfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {return 0;} 
 		static int qfs_chown(const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi) {return 0;}
 		static int qfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {return 0;}
@@ -422,7 +428,9 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 		static int qfs_release(const char *path, struct fuse_file_info *fi) {
 			_qlog->debug("QUBE_FUSE::qfs_release---[{}]--->", path);
+			(void) path;
 
+			close(fi->fh);
 			_qlog->debug("QUBE_FUSE::qfs_release---[Leaving]--->");
 			_qlog->flush();
 			return 0;
@@ -484,11 +492,25 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		}
 		
 		static int qfs_opendir(const char *path, struct fuse_file_info *fi) {
-			_qlog->debug("QUBE_FUSE::qfs_opendir---[{}]--->", *path);
+			_qlog->debug("QUBE_FUSE::qfs_opendir---[{}]--->", path);
+			DIR *local_fh;
+			int res;
+
+			last_full_path = qfs_get_root_path(path);
+			_qlog->debug("QUBE_FUSE::qfs_opendir: Fullpath={} and path={}.", last_full_path, path);
+			local_fh = ::opendir(last_full_path);
+			if (local_fh == NULL){
+				_qlog->error("QUBE_FUSE::qfs_opendir: Failed to open path [{}] with flags [{:d}].", path, fi->flags);
+				res = -errno;
+			} else {
+				_qlog->debug("QUBE_FUSE::qfs_opendir: opened path [{}] with result [{:d}].", path, local_fh);
+				res = 0;
+			}
+			fi->fh = (intptr_t)local_fh;
 
 			_qlog->debug("QUBE_FUSE::qfs_opendir---[Leaving]--->");
 			_qlog->flush();
-			return 0;
+			return res;
 		}
 
 		static int qfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi, 
@@ -505,9 +527,9 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			last_full_path = qfs_get_root_path(path);
 			_qlog->debug("QUBE_FUSE::qfs_readdir: Fullpath={} and path={}", last_full_path, path);
 
-			dp = ::opendir(last_full_path);     //<------Needs to be changed to qfs_opendir.............
+			dp = (DIR *) (uintptr_t)fi->fh;     //<------Needs to be changed to qfs_opendir.............
 			if (dp == NULL) {
-				_qlog->error("QUBE_FUSE::qfs_readdir: Failed to open directory: {}.", last_full_path);
+				_qlog->error("QUBE_FUSE::qfs_readdir: Failed to get directory info: {}.", last_full_path);
 				return -errno;
 			}
 			int r = 0;
@@ -541,7 +563,9 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 		static int qfs_releasedir(const char *path, struct fuse_file_info *fi) {
 			_qlog->debug("QUBE_FUSE::qfs_releasedir---[{}]--->", path);
+			(void) path;
 
+			::closedir((DIR *) (uintptr_t)fi->fh);
 			_qlog->debug("QUBE_FUSE::qfs_releasedir---[Leaving]--->");
 			_qlog->flush();
 			return 0;
@@ -561,7 +585,8 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		static int qfs_access(const char *path, int i) 
 		{
 			_qlog->debug("QUBE_FUSE::qfs_access---[{}]---[{:d}]--->", path, i);
-
+			// Access poses a slight security risk, so user checks should be done when file is opened/modified.
+			// Which means nothing to do here in this section.
 			_qlog->debug("QUBE_FUSE::qfs_access---[Leaving]--->");
 			_qlog->flush();
 			return 0;
