@@ -168,8 +168,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
     			return QFS_DATA;
 		}
 
-		static int qfs_getattr( const char *path, struct stat *stbuf, struct fuse_file_info *fi )
-		{
+		static int qfs_getattr( const char *path, struct stat *stbuf, struct fuse_file_info *fi ) {
 			_qlog->debug("QUBE_FUSE::qfs_getattr---[{}]--->", path);
 			int retstat = 0;
 
@@ -195,11 +194,16 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			_qlog->debug("QUBE_FUSE::qfs-readlink---[{}]---[{}]---[{:f}]--->", path, buf, size );
 			int res;
 
-			res = ::readlink(path, buf, size - 1);
-			if (res == -1)
-				return -errno;
-
-			buf[res] = '\0';
+			last_full_path = qfs_get_root_path(path);
+			res = ::readlink(last_full_path, buf, size - 1);
+			if (res == -1){
+				buf[0] = '\0';
+				_qlog->error("QUBE_FUSE::qfs_readlink: Failed to read link path, Fullpath={} and path={}.", last_full_path, path);
+				res = -errno;
+			} else {
+				_qlog->error("QUBE_FUSE::qfs_readlink: Opened for read->link path, Fullpath={} and path={}.", last_full_path, path);
+				res = 0;
+			}
 
 			_qlog->debug("QUBE_FUSE::qfs_readlink---[Leaving]--->");
 			_qlog->flush();
