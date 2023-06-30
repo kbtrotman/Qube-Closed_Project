@@ -466,6 +466,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			int res;
 
 			last_full_path = qfs_get_root_path(path);
+			_qlog->debug("QUBE_FUSE::qfs_open: Fullpath={} and path={}.", last_full_path, path);
 			res = ::lgetxattr(last_full_path, name, value, size);
 			if (res == -1) {
 				_qlog->error("QUBE_FUSE::qfs_getxattr: Error in getting xattr from full path [{}] name [{}] and size [{:d}]. Bailing.", last_full_path, name, size);
