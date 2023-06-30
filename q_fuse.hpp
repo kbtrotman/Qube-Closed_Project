@@ -175,12 +175,11 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			last_full_path = qfs_get_root_path(path);
 			_qlog->debug("QUBE_FUSE::qfs_getattr: Fullpath={} and path={}.", last_full_path, path);
 
-			const char *ptemp = last_full_path;
-			if (::lstat(ptemp, stbuf) == -1) {
-				_qlog->error("QUBE_FUSE::qfs_getattr: Failed to open path, Fullpath={} and path={}.", ptemp, path);
+			if (::lstat(last_full_path, stbuf) == -1) {
+				_qlog->error("QUBE_FUSE::qfs_getattr: Failed to open path, Fullpath={} and path={}.", last_full_path, path);
 				retstat = -errno;
 			} else {
-				_qlog->debug("QUBE_FUSE::qfs_getattr: Stat-ed, Fullpath={} and path={}.", ptemp, path);
+				_qlog->debug("QUBE_FUSE::qfs_getattr: Stat-ed, Fullpath={} and path={}.", last_full_path, path);
 				retstat = 0;
 			}
 
@@ -241,9 +240,15 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			_qlog->debug("QUBE_FUSE::qfs_unlink---[{}]--->", path );
 			int res;
 
-			res = ::unlink(path);
-			if (res == -1)
-				return -errno;
+			last_full_path = qfs_get_root_path(path);
+			res = ::unlink(last_full_path);
+			if (res == -1){
+				_qlog->error("QUBE_FUSE::qfs_unlink: Failed to un-link path, Fullpath={} and path={}.", last_full_path, path);
+				res = -errno;
+			} else {
+				_qlog->error("QUBE_FUSE::qfs_unlink: Unlinked (deleted)->link path, Fullpath={} and path={}.", last_full_path, path);
+				res = 0;
+			}
 
 			_qlog->debug("QUBE_FUSE::qfs_unlink---[Leaving]--->");
 			_qlog->flush();
@@ -434,69 +439,63 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			_qlog->debug("QUBE_FUSE::qfs_release---[{}]--->", path);
 			(void) path;
 
-			close(fi->fh);
+			::close(fi->fh);
 			_qlog->debug("QUBE_FUSE::qfs_release---[Leaving]--->");
 			_qlog->flush();
 			return 0;
 		}
 
 		static int qfs_fsync(const char *path, int sync, struct fuse_file_info *fi) {
-			_qlog->debug("QUBE_FUSE::qfs_fsync---[{}]--->", path);
-
-			_qlog->debug("QUBE_FUSE::qfs_fsync---[Leaving]--->");
+			_qlog->trace("QUBE_FUSE::qfs_fsync---[{}]--->", path);
+			::fsync(fi->fh);
+			_qlog->trace("QUBE_FUSE::qfs_fsync---[Leaving]--->");
 			_qlog->flush();
 			return 0;
 		}
 
 		static int qfs_setxattr (const char *path, const char *name, const char *val, size_t size, int flags) {
-			_qlog->debug("QUBE_FUSE::qfs_setxattr---[{}]---[{}]---[{:f}]---[{:f}]-->", *path, *name, *val, size );
+			_qlog->trace("QUBE_FUSE::qfs_setxattr---[{}]---[{}]---[{:f}]---[{:f}]-->", *path, *name, *val, size );
 
-			_qlog->debug("QUBE_FUSE::qfs_setxattr---[Leaving]--->");
+			_qlog->trace("QUBE_FUSE::qfs_setxattr---[Leaving]--->");
 			_qlog->flush();
 			return 0;
 		}
 
-		static int qfs_getxattr (const char *path, const char *name, char *val, size_t size) {
-			_qlog->debug("QUBE_FUSE::qfs_getxattr---[{}]---[{}]---[{:d}]>", path, name, size );
-			char retval[255];
+		static int qfs_getxattr (const char *path, const char *name, char *value, size_t size) {
+			_qlog->trace("QUBE_FUSE::qfs_getxattr---[{}]---[{}]---[{:d}]>", path, name, size );
 			int res;
 
-			if (size != 0) {
-				res = ::lgetxattr(path, name, retval, sizeof(retval));
-				if (res == -1) {
-					_qlog->error("QUBE_FUSE::qfs_getxattr: Error in getting xattr. Bailing.");
-					res = -errno;
-					_qlog->debug("QUBE_FUSE::qfs_getxattr---[Leaving]--->");
-				} else {
-					_qlog->debug("QUBE_FUSE::qfs_getxattr: lgetxattr returned [{}].", retval);
-					strcpy(val, retval);
-					_qlog->debug("QUBE_FUSE::qfs_getxattr---[Leaving]---[val={}]>", val);
-				}
+			last_full_path = qfs_get_root_path(path);
+			res = ::lgetxattr(last_full_path, name, value, size);
+			if (res == -1) {
+				_qlog->error("QUBE_FUSE::qfs_getxattr: Error in getting xattr from full path [{}] name [{}] and size [{:d}]. Bailing.", last_full_path, name, size);
+				res = -errno;
 			} else {
-				_qlog->debug("QUBE_FUSE::qfs_getxattr: No value to query, skipping xattr name: [{}].", name);
+				_qlog->debug("QUBE_FUSE::qfs_getxattr: Returned xattr from full path [{}] name [{}] and size [{:d}]. Bailing.", last_full_path, name, size);
 				res = 0;
-				_qlog->debug("QUBE_FUSE::qfs_getxattr---[Leaving]--->");
 			}
+
+			_qlog->trace("QUBE_FUSE::qfs_getxattr---[Leaving]--->");
 			_qlog->flush();
 			return res;
 		}
 
 		static int qfs_listxattr(const char *path, char *attr, size_t size) {
-			_qlog->debug("QUBE_FUSE::qfs_listxattr---[{}]---[{}]---[{:d}]--->", *path, *attr, size );
+			_qlog->trace("QUBE_FUSE::qfs_listxattr---[{}]---[{}]---[{:d}]--->", *path, *attr, size );
 			return 0;
-			_qlog->debug("QUBE_FUSE::qfs_listxattr---[Leaving]--->");
+			_qlog->trace("QUBE_FUSE::qfs_listxattr---[Leaving]--->");
 			_qlog->flush();
 		}
 
 		static int qfs_removexattr(const char *path, const char *attr) {
-			_qlog->debug("QUBE_FUSE::qfs_removexattr---[{}]---[{}]--->", *path, *attr );
+			_qlog->trace("QUBE_FUSE::qfs_removexattr---[{}]---[{}]--->", *path, *attr );
 			return 0;
-			_qlog->debug("QUBE_FUSE::qfs_removexattr---[Leaving]--->");
+			_qlog->trace("QUBE_FUSE::qfs_removexattr---[Leaving]--->");
 			_qlog->flush();
 		}
 		
 		static int qfs_opendir(const char *path, struct fuse_file_info *fi) {
-			_qlog->debug("QUBE_FUSE::qfs_opendir---[{}]--->", path);
+			_qlog->trace("QUBE_FUSE::qfs_opendir---[{}]--->", path);
 			DIR *local_fh;
 			int res;
 
@@ -504,15 +503,15 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			_qlog->debug("QUBE_FUSE::qfs_opendir: Fullpath={} and path={}.", last_full_path, path);
 			local_fh = ::opendir(last_full_path);
 			if (local_fh == NULL){
-				_qlog->error("QUBE_FUSE::qfs_opendir: Failed to open path [{}] with flags [{:d}].", path, fi->flags);
+				_qlog->error("QUBE_FUSE::qfs_opendir: Failed to open Full path {}, path [{}].", last_full_path, path);
 				res = -errno;
 			} else {
-				_qlog->debug("QUBE_FUSE::qfs_opendir: opened path [{}] with result [{:d}].", path, local_fh);
+				_qlog->debug("QUBE_FUSE::qfs_opendir: opened path [{}] with result [{}].", last_full_path, path);
 				res = 0;
 			}
 			fi->fh = (intptr_t)local_fh;
 
-			_qlog->debug("QUBE_FUSE::qfs_opendir---[Leaving]--->");
+			_qlog->trace("QUBE_FUSE::qfs_opendir---[Leaving]--->");
 			_qlog->flush();
 			return res;
 		}
@@ -559,7 +558,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
                 }
 			}
 			
-			closedir(dp);
+			//closedir(dp);
 			_qlog->debug("QUBE_FUSE::qfs_readdir---[Leaving]--->");
 			_qlog->flush();
 			return 0;	
@@ -568,8 +567,12 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		static int qfs_releasedir(const char *path, struct fuse_file_info *fi) {
 			_qlog->debug("QUBE_FUSE::qfs_releasedir---[{}]--->", path);
 			(void) path;
-
-			::closedir((DIR *) (uintptr_t)fi->fh);
+			if (fi->fh) {
+				::closedir((DIR *) (uintptr_t)fi->fh);
+				_qlog->debug("QUBE_FUSE::qfs_releasedir-->Closed Directory path [{}].", path);
+			} else {
+				_qlog->debug("QUBE_FUSE::qfs_releasedir-->path not open [{}].", path);
+			}
 			_qlog->debug("QUBE_FUSE::qfs_releasedir---[Leaving]--->");
 			_qlog->flush();
 			return 0;
@@ -578,7 +581,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		static int qfs_fsyncdir(const char *path, int, struct fuse_file_info *fi)
 		{
 			_qlog->debug("QUBE_FUSE::qfs_fsyncdir---[{}]--->", path);
-
+			//::fsyncdir(((DIR *) (uintptr_t)fi->fh);
 			_qlog->debug("QUBE_FUSE::qfs_fsyncdir---[Leaving]--->");
 			_qlog->flush();
 			return 0;
@@ -604,10 +607,10 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			last_full_path = qfs_get_root_path(path);
 			res = ::open(last_full_path, fi->flags, mode);
 			if (res == -1){
-				_qlog->debug("QUBE_FUSE::qfs_create: Failed to open path [{}] with mode [{:d}] and flags [{:d}].", path, mode, fi->flags);
+				_qlog->debug("QUBE_FUSE::qfs_create: Failed to open fullpath [{}] path [{}] with mode [{:d}] and flags [{:d}].", last_full_path, path, mode, fi->flags);
 				res = -errno;
 			} else {
-				_qlog->debug("QUBE_FUSE::qfs_create: opened path [{}] with result [{:d}].", path, res);
+				_qlog->debug("QUBE_FUSE::qfs_create: opened full path [{}] path [{}] with result [{:d}].", last_full_path, path, res);
 			}
 			fi->fh = res;
 	

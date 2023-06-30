@@ -92,13 +92,13 @@ int main( int argc, char *argv[] )
 
 	qube_fuse qf;
 
-	qube_log::_qlog->debug("==========================\n");
-	qube_log::_qlog->debug("server version = {:d}", qf.qpsql_getServerVers());
-	qube_log::_qlog->debug("==========================\n");	
+	qube_log::_qlog->info("===============================\n");
+	qube_log::_qlog->info("=== PG Server version = {:d} ===", qf.qpsql_getServerVers());
+	qube_log::_qlog->info("===============================\n");	
 
-    qube_log::_qlog->debug("=============================");
-    qube_log::_qlog->debug("===  Filesystem Starting  ===");
-    qube_log::_qlog->debug("=============================");
+    qube_log::_qlog->info("=================================");
+    qube_log::_qlog->info("=====  Filesystem Starting ======");
+    qube_log::_qlog->info("=================================");
 
 	// Startup the filesystem
   	return qf.run(argc, argv);
