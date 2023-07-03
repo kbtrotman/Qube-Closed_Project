@@ -211,6 +211,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 		static int qfs_mknod( const char *path, mode_t mode, dev_t rdev ) {
 			_qlog->debug("QUBE_FUSE::qfs_mknod---[{}]---[{:f}]---[{:f}]--->", path, mode, rdev );
+			_qlog->flush();
 			int res;
 
 			res = mknod_wrapper(AT_FDCWD, path, NULL, mode, rdev);
@@ -256,6 +257,18 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		}
 
 		static int qfs_rmdir (const char *dirname) {
+			_qlog->debug("QUBE_FUSE::qfs_rmdir---[{}]--->", dirname );
+			int res;
+
+			res = ::rmdir(dirname);
+			if (res == -1) {
+				_qlog->debug("QUBE_FUSE::qfs_rmdir: Failed to open path [{}]--->", dirname);
+				res = -errno;
+			} else {
+				_qlog->debug("QUBE_FUSE::qfs_rmdir: opened path [{}]-->", dirname);
+				res = 0
+			}
+			_qlog->debug("QUBE_FUSE::qfs_rmdir---[Leaving]--->");
 			return 0;
 		}
 
@@ -274,27 +287,49 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 		static int qfs_rename(const char *path, const char *c, unsigned int flags) {
 			_qlog->debug("QUBE_FUSE::qfs_rename---[{}]---[{}]---[{:d}]--->", *path, *c, flags );
+			_qlog->debug("QUBE_FUSE::qfs_rename---[Leaving]--->");
+			_qlog->flush();
 			return 0;
 		}
 
 		static int qfs_link(const char *path, const char *linkname) {
 			_qlog->debug("QUBE_FUSE::qfs_link---[{}]---[{}]--->", path, linkname );
-
-			return 0;
 			_qlog->debug("QUBE_FUSE::qfs_link---[Leaving]--->");
+			_qlog->flush();
+			return 0;
+
 		}
 		
-		static int qfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {return 0;} 
-		static int qfs_chown(const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi) {return 0;}
-		static int qfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {return 0;}
+		static int qfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
+			_qlog->debug("QUBE_FUSE::qfs_chmod---[{}]---[{:d}]--->", path, mode );
+			_qlog->debug("QUBE_FUSE::qfs_chmod---[Leaving]--->");
+			_qlog->flush();
+			return 0;
+		} 
+		
+		static int qfs_chown(const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi) {
+			_qlog->debug("QUBE_FUSE::qfs_chown---[{}]---[{:d}]---[{:d}]--->", path, uid, gid );
+			_qlog->debug("QUBE_FUSE::qfs_chown---[Leaving]--->");
+			_qlog->flush();
+			return 0;
+		}
+		
+		static int qfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {
+			_qlog->debug("QUBE_FUSE::qfs_truncate---[{}]---[{:d}]--->", path, offset );
+			_qlog->debug("QUBE_FUSE::qfs_truncate---[Leaving]--->");
+			_qlog->flush();
+			return 0;
+		}
 
 		static int qfs_open(const char *path, struct fuse_file_info *fi) {
 			_qlog->debug("QUBE_FUSE::qfs_open---[{}]--->", path );
+			_qlog->flush();
 			int local_fh;
 			int res;
 
 			last_full_path = qfs_get_root_path(path);
 			_qlog->debug("QUBE_FUSE::qfs_open: Fullpath={} and path={}.", last_full_path, path);
+			_qlog->flush();
 			local_fh = ::open(last_full_path, fi->flags);
 			if (local_fh == -1){
 				_qlog->error("QUBE_FUSE::qfs_create: Failed to open path [{}] with flags [{:d}].", path, fi->flags);
@@ -430,7 +465,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 		static int qfs_flush(const char *path, struct fuse_file_info *fi) {
 			_qlog->debug("QUBE_FUSE::qfs_flush---[{}]--->", path);
-
+			// This is a no-op call. We do nothing. Nothing at all. Zip. Zero. Nada. 1 less than 1.
 			_qlog->debug("QUBE_FUSE::qfs_flush---[Leaving]--->");
 			_qlog->flush();
 			return 0;
@@ -468,10 +503,10 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 			last_full_path = qfs_get_root_path(path);
 			_qlog->debug("QUBE_FUSE::qfs_getxattr: Fullpath={} and path={}.", last_full_path, path);
-			res = ::lgetxattr(last_full_path, name, value, size);
+			res = ::getxattr(last_full_path, name, value, size);
 			if (res == -1) {
-				_qlog->error("QUBE_FUSE::qfs_getxattr: Error in getting xattr from full path [{}] name [{}] and size [{:d}]. Bailing.", last_full_path, name, size);
 				res = -errno;
+				_qlog->error("QUBE_FUSE::qfs_getxattr: Error in getting xattr from full path [{}] name [{}] result [{:d}] and size [{:d}]. Bailing.", last_full_path, name, res, size);
 			} else {
 				_qlog->debug("QUBE_FUSE::qfs_getxattr: Returned xattr from full path [{}] name [{}] and size [{:d}]. Bailing.", last_full_path, name, size);
 				res = 0;
@@ -571,7 +606,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			(void) path;
 			if (fi->fh) {
 				::closedir((DIR *) (uintptr_t)fi->fh);
-				_qlog->debug("QUBE_FUSE::qfs_releasedir-->Closed Directory path [{}].", path);
+				_qlog->debug("QUBE_FUSE::qfs_releasedir-->Closed Directory path [{}] and filehandle [{}].", path, fi->fh);
 			} else {
 				_qlog->debug("QUBE_FUSE::qfs_releasedir-->path not open [{}].", path);
 			}
@@ -625,14 +660,23 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		static int qfs_lock(const char *path, struct fuse_file_info *fi, int cmd, struct flock *my_lock)
 		{
 			_qlog->debug("QUBE_FUSE::qfs_lock---[{}]---[{:d}]--->", path, cmd);
-
+			//No-op at present. This needs to be filled in once the read/write is working perfectly.
+			//We want to be able to share files like NFS (as a very crude example).
 			_qlog->debug("QUBE_FUSE::qfs_lock---[Leaving]--->");
 			_qlog->flush();
 			return 0;
 		}
 		
-		static int qfs_utimens(const char *path, const struct timespec *ts, struct fuse_file_info *fi)
-		{
+		
+		static int qfs_utime(const char *path, const struct timespec *ts, struct fuse_file_info *fi) {
+			_qlog->debug("QUBE_FUSE::qfs_utimens---[{}]--->", path);
+			//utime & utimens are no-ops until we can have written files. Then we add to these to modify the file data/time.
+			_qlog->debug("QUBE_FUSE::qfs_utimens---[Leaving]--->");
+			_qlog->flush();
+			return 0;
+		}
+
+		static int qfs_utimens(const char *path, const struct timespec *ts, struct fuse_file_info *fi) {
 			_qlog->debug("QUBE_FUSE::qfs_utimens---[{}]--->", path);
 
 			_qlog->debug("QUBE_FUSE::qfs_utimens---[Leaving]--->");
@@ -658,8 +702,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			return 0;
 		}
 
-		static int qfs_poll(const char *path, struct fuse_file_info *fi, struct fuse_pollhandle *ph, unsigned *reventsp)
-		{
+		static int qfs_poll(const char *path, struct fuse_file_info *fi, struct fuse_pollhandle *ph, unsigned *reventsp) {
 			_qlog->debug("QUBE_FUSE::qfs_poll---[{}]--->", path );
 
 			_qlog->debug("QUBE_FUSE::qfs_poll---[Leaving]--->");
@@ -667,20 +710,31 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			return 0;
 		}
 
-		static int qfs_write_buf(const char *path, struct fuse_bufvec *buf, off_t off, struct fuse_file_info *fi) {return 0;}
-		static int qfs_read_buf(const char *path, struct fuse_bufvec **bufv, size_t size, off_t off, 
-				struct fuse_file_info *fi) {return 0;}
+		static int qfs_write_buf(const char *path, struct fuse_bufvec *buf, off_t off, struct fuse_file_info *fi) {
+			_qlog->debug("QUBE_FUSE::qfs_write_buf---[{}]--->", path);
 
-		static int qfs_flock(const char *path, struct fuse_file_info *fi, int op)
-		{
+			_qlog->debug("QUBE_FUSE::qfs_write_buf---[Leaving]--->");
+			_qlog->flush();	
+			return 0;
+		}
+
+		static int qfs_read_buf(const char *path, struct fuse_bufvec **bufv, size_t size, off_t off, struct fuse_file_info *fi) {
+			_qlog->debug("QUBE_FUSE::qfs_read_buf---[{}]--->", path);
+
+			_qlog->debug("QUBE_FUSE::qfs_read_buf---[Leaving]--->");
+			_qlog->flush();
+			return 0;
+		}
+
+		static int qfs_flock(const char *path, struct fuse_file_info *fi, int op) {
 			_qlog->debug("QUBE_FUSE::qfs_flock---[{}]---[{:d}]--->", path, op );
 
 			_qlog->debug("QUBE_FUSE::qfs_flock---[Leaving]--->");
 			_qlog->flush();
 			return 0;
 		}
-		static int qfs_fallocate(const char *path, int i, off_t off1, off_t off2, struct fuse_file_info *fi)
-		{
+		
+		static int qfs_fallocate(const char *path, int i, off_t off1, off_t off2, struct fuse_file_info *fi) {
 			_qlog->debug("QUBE_FUSE::qfs_fallocate---[{}]---[{:d}]---[{:d}]---[{:d}]--->", path, i, off1, off2 );
 
 			_qlog->debug("QUBE_FUSE::qfs_fallocate---[Leaving]--->");
