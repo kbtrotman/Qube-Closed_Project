@@ -266,7 +266,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 				res = -errno;
 			} else {
 				_qlog->debug("QUBE_FUSE::qfs_rmdir: opened path [{}]-->", dirname);
-				res = 0
+				res = 0;
 			}
 			_qlog->debug("QUBE_FUSE::qfs_rmdir---[Leaving]--->");
 			return 0;
