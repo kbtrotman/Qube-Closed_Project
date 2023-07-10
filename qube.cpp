@@ -7,7 +7,6 @@
  *
  */
  
-#include "qube.hpp"
 // For Logging!
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/daily_file_sink.h"
@@ -15,7 +14,7 @@
 #include <openssl/sha.h>
 
 // Globals
-
+#include "qube.hpp"
 
 // Functions & classes
 
@@ -33,7 +32,7 @@ class qube_log {
         		_qlog = std::make_shared<spdlog::logger>("qube_log", file_sink);
 
 				_qlog->set_level(spdlog::level::debug);
-				_qlog->debug("Qube logging started.");
+				_qlog->debug("qube_log::qube_log: *** Qube logging started. ***");
 				_qlog->flush();
 				logger_init = true;
 			}			
@@ -59,7 +58,7 @@ class qube_hash : public qube_psql {
 	public:
 
 		qube_hash () {
-			_qlog->debug("Hash Init--->");
+			_qlog->debug("qube_hash::qube_hash: Hash Init--->");
 			_qlog->flush();
 		}
 
@@ -74,6 +73,7 @@ class qube_hash : public qube_psql {
 				ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>( hash[i] );
 			}
 			_qlog->debug("qube_hash::get_sha512_hash---[Leaving]---with hash string---[{}]--->.", ss.str());
+
   			return ss.str();
 		}
 

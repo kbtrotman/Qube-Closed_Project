@@ -344,57 +344,54 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			return res;
 		}
 
-		static int qfs_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi )
-		{
-			_qlog->debug("QUBE_FUSE:qfs_read---[{}]---[{}]--->", path, buffer );
-			_qlog->flush();
+		static int qfs_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi ) {
+			_qlog->debug("QUBE_FUSE:qfs_read---[{}]--->", path );
 			int fd;
 			int res;
 			int original_offset;
 			int original_size;
-			std::string tmpbuffer("");
-			std::string block_hash = "";
-			std::string actual_contents = "";
+			char tmpbuffer[4096];
+			std::string block_hash;
+			std::string actual_contents;
 
 			fd = fi->fh;
 
 			// Change our hashes in the file into blocks from the DB....
 			original_offset = offset;
 			original_size = size;
-			offset = (offset * HASH_SIZE) / BLOCK_SIZE;
-			size = int((size * HASH_SIZE) / BLOCK_SIZE);
+			//offset = (offset * HASH_SIZE);
+			//size = ((size / HASH_SIZE) * BLOCK_SIZE);
 
 			::lseek(fd, offset, SEEK_SET);
+			_qlog->debug("QUBE_FUSE:qfs_read: seeked to offset {:d} in file handle {:d} to read size {:d}.", offset, fd, size);
 
-			res = pread(fd, &tmpbuffer, size, offset);
+			res = pread(fd, tmpbuffer, size, offset);
 			if (res == -1) {
+				_qlog->error("QUBE_FUSE:qfs_read: error reading from provided file handle {:d}.", fd);
 				res = -errno;
-			} else {
-
+				return 0;
 			}
 
-
-
-
-
-
-
-
-			for (int i=0; i < (int((tmpbuffer.length() / HASH_SIZE))); i++) {
-				block_hash = tmpbuffer.substr((i * HASH_SIZE), ((i + 1) * HASH_SIZE));
+			_qlog->debug("QUBE_FUSE:qfs_read: read {} bytes into temp buffer from filehandle {:d}, # of hashes {:d}.", strlen(tmpbuffer), fd, (strlen(tmpbuffer) / HASH_SIZE));
+			
+			std::string read_buffer(tmpbuffer);
+			for (int i=0; i < (int(read_buffer.length() / HASH_SIZE)); i++) {
+				block_hash = read_buffer.substr((i * HASH_SIZE), ((i + 1) * HASH_SIZE));
 				actual_contents += qpsql_get_block_from_hash(block_hash);
+				//_qlog->debug("QUBE_FUSE:qfs_read: read hash contents: {} and added to block contents {}.", block_hash, actual_contents);
 			}
+
 			size = original_size;
 			offset = original_offset;
-			_qlog->debug("read contents: {} ", actual_contents);
-			_qlog->debug("{:d} Bytes of data read to buffer with qubeFS filepath {} and filehandle {:d}.", size, last_full_path, fd);
+			_qlog->debug("QUBE_FUSE:qfs_read: Bytes of data read to buffer with qubeFS and filehandle {:d}.", fd);
+
+			buffer = (char *) actual_contents.c_str();
 			_qlog->debug("QUBE_FUSE::qfs_read---[Leaving]--->");
 			_qlog->flush();
 			return actual_contents.length();
 		}
 
-		static int qfs_write( const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *info )
-		{
+		static int qfs_write( const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *info ) {
 			_qlog->debug("QUBE_FUSE::qfs_write---[{}]---[{}]]-->", path, buf);
 			double original_offset;
 			std::string block_hash;
@@ -416,7 +413,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 				int fracBuffers = buffer.length() % BLOCK_SIZE;  // Ceiling doesn't work well for this. It doesn't have good decimal precision.
 				int numBuffers = buffer.length() / BLOCK_SIZE;	 // After storing full buffers, the mod(%) will be the partial buffer size left over.								          
 																   
-				if (fracBuffers > 0) {numBuffers++;}            // If we have extra data, tghen we need to add a buffer frame to store it.
+				if (fracBuffers > 0) {numBuffers++;}             // If we have extra data, tghen we need to add a buffer frame to store it.
 				_qlog->debug("QUBE_FUSE::qfs_write: There are {:d} buffers in the data stream, including {:d} bytes in a fractional buffer.", numBuffers, fracBuffers);
 
         		for (int i=0; i < numBuffers; i++) {
@@ -432,13 +429,20 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 						//hash doesn't exist, save it...
 						qpsql_insert_hash(block_hash, cur_block);
 						_qlog->debug("QUBE_FUSE::qfs_write: Saved to DB: hash: {} Block: {}", block_hash, cur_block);
+					} else {
+						// Check for collisions and note if there is one.
+						//     !!!!!!!!!!!!!!!!!!!!!!!!
+						// If no collisions, then update the use count and
+						// statistics.
+						//     !!!!!!!!!!!!!!!!!!!!!!!!
 					}
-					//Write the results to the file we're modifying...					
-					_qlog->debug("QUBE_FUSE::qfs_write: End Hash Buffer: {}", hash_buffer);
-					res = qfs_write_to_file( info->fh, hash_buffer.c_str(), hash_buffer.length(), offset );
-					_qlog->debug("QUBE_FUSE::qfs_write: {} Bytes of data Written from buffer of length {} to qubeFS filename {} and filehandle {}.",
-						size, buffer.length(), path, info->fh);
+
 				}
+				//Write the results to the file we're modifying...					
+				_qlog->debug("QUBE_FUSE::qfs_write: End Hash Buffer: {}", hash_buffer);
+				res = qfs_write_to_file( info->fh, hash_buffer.c_str(), hash_buffer.length(), offset );
+				_qlog->debug("QUBE_FUSE::qfs_write: {} Bytes of data Written from buffer of length {} to qubeFS filename {} and filehandle {}.",
+					res, buffer.length(), path, info->fh);
 			}
 			offset = original_offset;
 			_qlog->debug("QUBE_FUSE::qfs_write---[Leaving]--->");
