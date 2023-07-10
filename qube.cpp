@@ -73,7 +73,7 @@ class qube_hash : public qube_psql {
 			for(int i = 0; i < SHA512_DIGEST_LENGTH; i++){
 				ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>( hash[i] );
 			}
-			_qlog->debug("Leaving qube_hash::get_sha512_hash with hash string---[{}].", ss.str());
+			_qlog->debug("qube_hash::get_sha512_hash---[Leaving]---with hash string---[{}]--->.", ss.str());
   			return ss.str();
 		}
 

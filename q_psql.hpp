@@ -40,7 +40,7 @@ class qube_psql : public qube_log {
         			qpsql_do_exit(1);
 					exit(1);
     			} else {
-					_qlog->debug("Connected to postrgres DB.");
+					_qlog->debug("QUBE_PSQL::qube_psql: Connected to postrgres DB.");
                     psql_init = true;
 				}
 			}
@@ -59,15 +59,15 @@ class qube_psql : public qube_log {
 
 		// All globally static methods below this point.....
 		static std::string qpsql_get_quoted_value(std::string in_string){
-    		_qlog->debug("qpsql_get_quoted_value---instr: {}--->", in_string);
+    		_qlog->debug("QUBE_PSQL::qpsql_get_quoted_value---instr: {}--->", in_string);
 			char *escaped_val = PQescapeLiteral(conn, in_string.c_str(), in_string.length());
     		if (escaped_val == NULL) {
-        		_qlog->error("Failed to escape a value: {} with connection {:d}.", in_string, PQerrorMessage(conn));
+        		_qlog->error("QUBE_PSQL::qpsql_get_quoted_value: Failed to escape a value: {} with connection {:d}.", in_string, PQerrorMessage(conn));
 				qpsql_do_exit(4);
     		} 
 			std::string tmp_quote(escaped_val);
 			PQfreemem(escaped_val);
-			_qlog->debug("Leaving qpsql_get_quoted_value with quoted string: {}", tmp_quote);
+			_qlog->debug("QUBE_PSQL::qpsql_get_quoted_value---[Leaving]---with quoted string: {}--->", tmp_quote);
 			return tmp_quote;
 		}
 
@@ -91,68 +91,81 @@ class qube_psql : public qube_log {
 
 		static std::string qpsql_get_block_from_hash(std::string hash) {
             //SELECT a data block from the DB given a hash value....
-            _qlog->debug("qpsql_get_block_from_hash---hash: {}--->", hash);
-
+            _qlog->debug("QUBE_FUSE::qpsql_get_block_from_hash---hash: {}--->", hash);
+			std::string data_block;
+			int res;
+			
             quoted_hash = qpsql_get_quoted_value(hash);
 			char *quoted_sql = (char *) malloc(strlen(qu_sql) + quoted_hash.length() + 1);
     		std::sprintf(quoted_sql, qu_sql, quoted_hash.c_str());
  
-            _qlog->debug("SELECT QUERY = {}", quoted_sql);
-            last_res = qpsql_execQuery(quoted_sql);
-
-			std::string data_block = qpsql_get_unquoted_value(PQgetvalue(last_res, 0, 0));
-			_qlog->debug("Data block returned from DB. query = {} returned block = {}", quoted_sql, data_block); 
-			_qlog->debug("Leaving qpsql_get_block_from_hash with data block: {}", data_block);
-			
+            _qlog->debug("QUBE_FUSE::qpsql_get_block_from_hash: SELECT QUERY = {}", quoted_sql);
+            res = qpsql_execQuery(quoted_sql);
+			if (res == 0) {
+				_qlog->warn("QUBE_FUSE::qpsql_get_block_from_hash: No records returned for hash.");
+				data_block = NO_RECORD_S;
+			} else {
+				data_block = qpsql_get_unquoted_value(PQgetvalue(last_res, 0, 0));
+				_qlog->debug("QUBE_FUSE::qpsql_get_block_from_hash: Data block returned from DB. query = {} returned block = {}", quoted_sql, data_block); 
+			}	
+				
+			_qlog->debug("QUBE_FUSE::qpsql_get_block_from_hash: Leaving qpsql_get_block_from_hash with data block: {}", data_block);
 			return data_block;
 		}
 
         static int qpsql_insert_hash(std::string hash, std::string data_block) {
             //INSERT a hash into the DB....
-            _qlog->debug("qpsql_insert_hash_block---hash: {}---block:{}--->", hash, data_block);
+            _qlog->debug("QUBE_PSQL::qpsql_insert_hash---hash: {}---block:{}--->", hash, data_block);
 
             quoted_hash = qpsql_get_quoted_value(hash);
             quoted_block = qpsql_get_quoted_value(data_block);
             char *quoted_sql = (char *) malloc(strlen(ins_sql) + quoted_hash.length() + quoted_block.length() + 1);
             std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), quoted_block.c_str());
 			std::string tmp_sql(quoted_sql);
+			int res;
 
-            _qlog->debug("INSERT QUERY = {}", tmp_sql);
+            _qlog->debug("QUBE_PSQL::qpsql_insert_hash: INSERT QUERY = {}", tmp_sql);
             last_ins = qpsql_execInsert(tmp_sql);
+			if (PQresultStatus(last_ins) != PGRES_COMMAND_OK) {
+				res = 0;
+				_qlog->critical("QUBE_PSQL::qpsql_insert_hash: Data insert failed into DB. query = {}", tmp_sql);
+			} else {	
+				_qlog->debug("QUBE_PSQL::qpsql_insert_hash: Data inserted into DB. query = {}", tmp_sql);
+				res = 1;
+			}
 
-			_qlog->debug("Data inserted into DB. query = {}", tmp_sql);
-            _qlog->debug("Leaving qpsql_insert_hash with hash: {}", quoted_hash);
-            return PQresultStatus(last_ins);
+            _qlog->debug("QUBE_PSQL::qpsql_insert_hash: ---[Leaving]---with hash: {}--->", quoted_hash);
+            return res;
         }
 
-		static PGresult* qpsql_execQuery(std::string qube_query) {
+		static int qpsql_execQuery(std::string qube_query) {
 			/* Create SQL statement */
-			_qlog->debug("qpsql_execQuery---qube_query {}--->", qube_query);
-			_qlog->debug(qube_query);
+			_qlog->debug("QUBE_PSQL::qpsql_execQuery---qube_query {}--->", qube_query);
 			PGresult *res;
-
+			
     		res = PQexec(conn, qube_query.c_str());
     		if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        		_qlog->error("[ERROR!] No data was returned from the SQL Query just posted. SQL Return Error message: {}\n", PQerrorMessage(conn));
-        		qpsql_do_exit(3);
-    		}
-    		rec_count = PQntuples(res);
-			_qlog->debug("Leaving qpsql_execQuery with record count: {:d}", rec_count);
-			return res;
+        		_qlog->error("QUBE_PSQL::qpsql_execQuery: No data was returned from the SQL Query just posted. SQL Return Error message: {}\n", PQerrorMessage(conn));
+        		rec_count = -1;
+    		} else {
+    			rec_count = PQntuples(res);
+			}
+
+			_qlog->debug("QUBE_PSQL::qpsql_execQuery---[Leaving]---with record count: {:d}--->", rec_count);
+			return rec_count;
 		}
 
 		static PGresult* qpsql_execInsert(std::string qube_query) {
 			/* Create SQL statement */
-			_qlog->debug("qpsql_execInsert---qube_query {}--->", qube_query);
+			_qlog->debug("QUBE_PSQL::qpsql_execInsert---qube_query {}--->", qube_query);
 			_qlog->debug(qube_query);
 			PGresult *res;
 
     		res = PQexec(conn, qube_query.c_str());
     		if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        		_qlog->error("[ERROR!] INSERT failed from the SQL Query just posted. SQL Return Error message: {}\n", PQerrorMessage(conn));
-        		qpsql_do_exit(8);
+        		_qlog->error("QUBE_PSQL::qpsql_execInsert: INSERT failed from the SQL Query just posted. SQL Return Error message: {}\n", PQerrorMessage(conn));
     		}
-			_qlog->debug("Leaving qpsql_execInsert.");
+			_qlog->debug("QUBE_PSQL::qpsql_execInsert:---[Leaving]--->");
 			return res;
 		}
 

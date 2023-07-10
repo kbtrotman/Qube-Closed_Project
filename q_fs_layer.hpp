@@ -51,41 +51,36 @@ class qube_FS {
             return ftemp;
         }
 
-		static int write_to_file( const char *path, const char *data_content, size_t size, off_t offset )
+		static int qfs_write_to_file( int fd, const char *data_content, size_t size, off_t offset )
 		{
-			qube_log::_qlog->debug("QUBE_FS::Write_to_file---[{}]---[{}]---[{:d}]>", path, data_content, size);
+			qube_log::_qlog->debug("QUBE_FS::qfs_Write_to_file---[{:d}]---[{}]---[{:d}]>", fd, data_content, size);
             // Here we are writing only the hashes to the actual filesystem. Data blocks that are normally
             // in a filesystem are written into the DB via the qpsql class.
-            qube_log::_qlog->flush();
             
-            int fd;
             int write_result;
             size_t total_written = 0;
 
-            // open the file
-            fd = open(path, O_WRONLY);
-            if (fd == -1) {
-                return -errno;
-            }
 
             //Seek to our writing offset point before doing anythign else
-            lseek(fd, offset, SEEK_SET);
+            ::lseek(fd, offset, SEEK_SET);
 
             // write the data to the file, deduplicating blocks as we go
             while (total_written < size) {
-
                 // write the block to the file
-                write_result = pwrite(fd, data_content + total_written, BLOCK_SIZE, offset + total_written);
+                write_result = ::pwrite(fd, data_content, BLOCK_SIZE, offset + total_written);
 
                 if (write_result == -1) {
-                    close(fd);
-                    return -errno;
+                    qube_log::_qlog->debug("QUBE_FS::qfs_Write_to_file: error writing to filehandle---[{:d}]--->", fd);
+                    total_written = -errno;
+                    break;
+                } else {
+                    qube_log::_qlog->debug("QUBE_FS::qfs_Write_to_file: wrote {} bytes to filehandle {:d} at offset {}, total now written = {}.", BLOCK_SIZE, fd, offset, total_written);
+                    total_written += write_result;
                 }
-                total_written += write_result;
-
             }
 
-            close(fd);
+            ::close(fd);
+            qube_log::_qlog->debug("QUBE_FS::qfs_write_to_file:---[Leaving]--->");
             qube_log::_qlog->flush();
             return total_written;
 		}
