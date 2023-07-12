@@ -1,0 +1,30 @@
+# Qube
+# Currently under GNU License
+# Written beginning 2023 by Kevin Trotman
+
+Qube-FS Filesystem
+------------------
+
+1. What is the Qube Filesystem:
+Extending the traditional Filesystem to the 4th dimention. A new type of filesystem for the new emerging 
+workloads of organzitions that find themselves now struggling with how to store and keep data long-term.
+What does that mean? To understand we need to look at the typical company, internet host, or anywhere a
+file is stored really. Often files have to be kept forever simply because no one knows what type of data
+is in that file. It's often never moved to cheaper tiers of storage unless the entire filesystem is set
+to a lower priority or de-comissioned. And worse, when there is de-dupe in an organization, it's on a
+filesystem, volume, or device level, ignoring any global savings that could be obtained by files that are
+in multiple system types across the whole organization. Qube is written from the ground up with new work-
+loads in mind to answer these issues. These workloads are largely internet-based and require new security,
+new groupings, and better file versioning than has ever existed before in traditional filesystems, in
+addition to the items mentioned above.
+
+2. So, now that we see the vision, where is Qube right now?
+Uhh, basically beginning and no better than a usual small backup filestem written using fuse. To allow for
+testing, the beginning stages of Qube are written in fuse, and the de-dupe ability is the first thing that
+has been targetted so far. The intent is to then add the meta-data into an ext4-like structure soon. So,
+at present if you downloaded and used Qube, it's main usefulness would be as a backup filesystem behind 
+backula or another backup system that writes large files, and there are many systems like that available
+which are in prod status, not dev status. I publish files for it so that people can use the first stages
+of it to break off their own work and design something new, but its not ready for public consumption at the
+present time as it stands today. Once the backend has been moved from fuse, then it will begin to resemble
+something new and unique.
