@@ -447,24 +447,9 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			offset = original_offset;
 			_qlog->debug("QUBE_FUSE::qfs_write---[Leaving]--->");
 			_qlog->flush();
-			return res;
+			//return res;  // If we return the actual size we wrote, it will break fuse & return I/O error.
+			return size;   // Fuse expects us to write the same data we recieved into this sub. :P
 		}
-
-//		static int qfs_write_buf(const char *path, struct fuse_bufvec *buf, off_t off, struct fuse_file_info *fi) {
-//			_qlog->debug("QUBE_FUSE::qfs_write_buf---[{}]--->", path);
-//
-//			_qlog->debug("QUBE_FUSE::qfs_write_buf---[Leaving]--->");
-//			_qlog->flush();	
-//			return 0;
-//		}
-
-//		static int qfs_read_buf(const char *path, struct fuse_bufvec **bufv, size_t size, off_t off, struct fuse_file_info *fi) {
-//			_qlog->debug("QUBE_FUSE::qfs_read_buf---[{}]--->", path);
-//
-//			_qlog->debug("QUBE_FUSE::qfs_read_buf---[Leaving]--->");
-//			_qlog->flush();
-//			return 0;
-//		}
 
 		static int qfs_statfs (const char *path, struct statvfs *stbuf) {
 

@@ -12,6 +12,7 @@
 #include "spdlog/sinks/daily_file_sink.h"
 // Dedupe & crypto algorythms
 #include <openssl/sha.h>
+#include <openssl/evp.h>
 
 // Globals
 #include "qube.hpp"
@@ -64,25 +65,31 @@ class qube_hash : public qube_psql {
 
 		static std::string get_sha512_hash(const std::string str){
 			_qlog->debug("qube_hash::get_sha512_hash---[{}]--->", str);
-  			SHA512_CTX sha512;
-  			SHA512_Init(&sha512);
-  			SHA512_Update(&sha512, str.c_str(), str.size());
-  			SHA512_Final(hash, &sha512);
+  			SHA512_CTX ;
+			EVP_MD_CTX *sha512;
+			std::string tmp_hash;
+			unsigned int hash_size = (unsigned int)HASH_SIZE;
 
-			for(int i = 0; i < SHA512_DIGEST_LENGTH; i++){
-				ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>( hash[i] );
+			if((sha512 = EVP_MD_CTX_new()) == NULL) {std::memcpy(hash, NO_HASH_S, std::strlen(NO_HASH_S));}
+			if( EVP_DigestInit_ex(sha512, EVP_sha512(), NULL) != 1 ) {std::memcpy(hash, NO_HASH_S, std::strlen(NO_HASH_S));}
+			if( EVP_DigestUpdate(sha512, str.c_str(), str.size()) != 1 ) {std::memcpy(hash, NO_HASH_S, std::strlen(NO_HASH_S));}
+			if((*hash = ( char * )OPENSSL_malloc(EVP_MD_size(EVP_sha512()))) == NULL) {std::memcpy(hash, NO_HASH_S, std::strlen(NO_HASH_S));}
+			if( EVP_DigestFinal_ex(sha512, (unsigned char*) *hash, &hash_size) != 1) {
+				std::memcpy(hash, NO_HASH_S, std::strlen(NO_HASH_S));
+			} else {
+				tmp_hash.assign(*hash);	
 			}
-			_qlog->debug("qube_hash::get_sha512_hash---[Leaving]---with hash string---[{}]--->.", ss.str());
 
-  			return ss.str();
+			EVP_MD_CTX_free(sha512);
+			_qlog->debug("qube_hash::get_sha512_hash---[Leaving]---with hash string---[{}]--->.", hash);
+			_qlog->flush();
+  			return tmp_hash;
 		}
 
 	private:
-		static unsigned char hash[SHA512_DIGEST_LENGTH];
-  		static std::stringstream ss;
+		static char *hash[SHA512_DIGEST_LENGTH];
 };
-unsigned char qube_hash::hash[SHA512_DIGEST_LENGTH] = {};
-std::stringstream qube_hash::ss=std::stringstream{};
+char *qube_hash::hash[SHA512_DIGEST_LENGTH] = {};
 #include "q_fuse.hpp"
 
 

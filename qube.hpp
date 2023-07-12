@@ -40,6 +40,8 @@
 #define BLOCK_SIZE 4096
 #define HASH_SIZE SHA512_DIGEST_LENGTH
 
+#define NO_HASH_S "NO_ENC_HASHES_RETURNED"
+
 // Database configuration
 //#############################
 #define DATABASE "fuse"
@@ -47,6 +49,7 @@
 #define PASSWORD "Postgres!909"
 #define HOST "10.100.122.20"
 #define PORT "5432"
+
 #define NO_RECORD_S "NO_DB_RECORDS_RETURNED"
 
 #define DBSTRING "user=" USER " dbname=" DATABASE " password=" PASSWORD " hostaddr=" HOST " port=" PORT

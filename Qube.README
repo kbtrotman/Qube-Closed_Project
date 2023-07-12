@@ -16,7 +16,10 @@ filesystem, volume, or device level, ignoring any global savings that could be o
 in multiple system types across the whole organization. Qube is written from the ground up with new work-
 loads in mind to answer these issues. These workloads are largely internet-based and require new security,
 new groupings, and better file versioning than has ever existed before in traditional filesystems, in
-addition to the items mentioned above.
+addition to the items mentioned above. In addition, many of these filesystems belong to companies that
+need to track things like data classification, sensitivity, and ownership trees over the lifetime of the
+data. That is a huge ask, but if broken down into solvable taks, it's not as hard to accomplish if we
+ignore the entire way things have always been done and build a new framework from the ground-up.
 
 2. So, now that we see the vision, where is Qube right now?
 Uhh, basically beginning and no better than a usual small backup filestem written using fuse. To allow for
