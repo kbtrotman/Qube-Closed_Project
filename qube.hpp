@@ -38,7 +38,7 @@
 // Constants
 //#############################
 #define BLOCK_SIZE 4096
-#define HASH_SIZE SHA512_DIGEST_LENGTH
+#define HASH_SIZE (2 * SHA512_DIGEST_LENGTH)
 
 #define NO_HASH_S "NO_ENC_HASHES_RETURNED"
 
