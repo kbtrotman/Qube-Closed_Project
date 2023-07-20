@@ -25,7 +25,7 @@ class qube_FS {
 
 
         static char* qfs_get_root_path(const char* path) {
-            qube_log::_qlog->debug("QUBE_FS::qfs_get_root_path: with path = {}", path);
+            qube_log::_qlog->trace("QUBE_FS::qfs_get_root_path---[path = {}]--->", path);
 
             std::string s(path);
             if (!s.empty() && s.at(0) == '/') { s.erase(0, 1); }
@@ -46,7 +46,7 @@ class qube_FS {
             }
 
             qube_log::_qlog->debug("QUBE_FS::qfs_get_root_path: rootdir = {}, rel path = {}, full path = {}", settings.root_dir->c_str(), path, ftemp);
-            qube_log::_qlog->debug("QUBE_FS::qfs_get_root_path:---[Leaving]--->");
+            qube_log::_qlog->trace("QUBE_FS::qfs_get_root_path:---[Leaving]--->");
             qube_log::_qlog->flush();
             return ftemp;
         }

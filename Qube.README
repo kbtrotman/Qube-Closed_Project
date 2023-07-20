@@ -6,6 +6,12 @@ Qube-FS Filesystem
 ------------------
 
 1. What is the Qube Filesystem:
+Qube is several things. Many things actually. The eventual goal of this is to have a hardware appliance
+built on the entire principal that will eventually be Qube. IE: One large storage array that can manage
+storage for an entire organization. However, that's a big vision that is far off. So, for now, let's stick 
+to just the software that sets up the Qube Filesystem itself.
+
+Qube software is:
 Extending the traditional Filesystem to the 4th dimention. A new type of filesystem for the new emerging 
 workloads of organzitions that find themselves now struggling with how to store and keep data long-term.
 What does that mean? To understand we need to look at the typical company, internet host, or anywhere a
@@ -15,11 +21,29 @@ to a lower priority or de-comissioned. And worse, when there is de-dupe in an or
 filesystem, volume, or device level, ignoring any global savings that could be obtained by files that are
 in multiple system types across the whole organization. Qube is written from the ground up with new work-
 loads in mind to answer these issues. These workloads are largely internet-based and require new security,
-new groupings, and better file versioning than has ever existed before in traditional filesystems, in
-addition to the items mentioned above. In addition, many of these filesystems belong to companies that
+new groupings, and better file versioning than has ever existed before in traditional filesystems (in
+addition to the items mentioned above). In addition, many of these filesystems belong to companies that
 need to track things like data classification, sensitivity, and ownership trees over the lifetime of the
 data. That is a huge ask, but if broken down into solvable taks, it's not as hard to accomplish if we
 ignore the entire way things have always been done and build a new framework from the ground-up.
+    
+    A. First, to share de-dupe across multiple hosts and multiple devices, the hash table has to be A
+    shared architecture. There are a couple of ways to accomplish that. One is to simply make the hash
+    table available via the network, and the other is to make a fully shareable filesystem, such as A
+    global, or distributed, filesystem. Qube aims for the first task, however, to support object-based
+    storage, a locking mechanism would need to be supported also, so the side-effect of using both of
+    those is that Qube becomes a fully distributed filesystem whether we intend for it to be or not.
+
+    B. The second idea floated here is the grouping of files. The internet has made the tree structure
+    mostly obsolete. A lot of organizations now use DBs to store data for the internet simply because
+    the cross of object-based storage and internet hosted files crosses at products like SharePoint and
+    Oracle anyway. Hashtags, message trails, and such have replaced the traditional groupings for files,
+    and we're at a point where the traditional filesystem is just a low-level base of operations that
+    doesn't necessarily include any of the data a developer would like to be attached to that file (which
+    is one reason why DBs are common now for internet-based files). Also, today the standard group idents
+    for a file would reference the team we directly work with, but teams have become more fluid, regionally-
+    dispersed, and less well-defined. It would not take much more space to include tagging, versioning 
+    (mail-chaining), and extended team-based groupings with a file.  
 
 2. So, now that we see the vision, where is Qube right now?
 Uhh, basically beginning and no better than a usual small backup filestem written using fuse. To allow for
@@ -30,4 +54,4 @@ backula or another backup system that writes large files, and there are many sys
 which are in prod status, not dev status. I publish files for it so that people can use the first stages
 of it to break off their own work and design something new, but its not ready for public consumption at the
 present time as it stands today. Once the backend has been moved from fuse, then it will begin to resemble
-something new and unique.
+something new and unique and also something more like an alpha release.

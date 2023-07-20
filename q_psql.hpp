@@ -58,7 +58,7 @@ class qube_psql : public qube_log {
 
 
 		// All globally static methods below this point.....
-		static std::string qpsql_get_quoted_value(std::string in_string){
+		static std::string qpsql_get_quoted_value(std::string in_string) {
     		_qlog->debug("QUBE_PSQL::qpsql_get_quoted_value---instr: {}--->", in_string);
 			char *escaped_val = PQescapeLiteral(conn, in_string.c_str(), in_string.length());
     		if (escaped_val == NULL) {
@@ -71,20 +71,20 @@ class qube_psql : public qube_log {
 			return tmp_quote;
 		}
 
-		static std::string qpsql_get_unquoted_value(char *in_string){
-    		_qlog->debug("qpsql_get_unquoted_value---binary instr: {}--->", in_string);
+		static std::string qpsql_get_unquoted_value(char *in_string) {
+    		_qlog->debug("QUBE_FUSE::qpsql_get_unquoted_value---binary instr: {}--->", in_string);
 		 	char *escaped_binary_field = in_string;
         	size_t escaped_binary_field_size = PQgetlength(last_res, 0, 0);
         	char *binary_field = reinterpret_cast<char *>(PQunescapeBytea((const unsigned char *)escaped_binary_field, &escaped_binary_field_size));
         	if (!binary_field) {
-            	_qlog->error("Failed to unescape binary data: %s", PQerrorMessage(conn));
+            	_qlog->error("QUBE_FUSE::qpsql_get_unquoted_value: Failed to unescape binary data: {}", PQerrorMessage(conn));
 				qpsql_do_exit(7);
 				return "";
 			}else {
-				_qlog->debug("unescaped string value = {}", binary_field);
+				_qlog->debug("QUBE_FUSE::qpsql_get_unquoted_value: unescaped string value = {}", binary_field);
 				std::string tmp_field(binary_field);
 				PQfreemem(binary_field);
-				_qlog->debug("Leaving qpsql_get_unquoted_value with binary data string: {}", tmp_field);
+				_qlog->debug("QUBE_FUSE::qpsql_get_unquoted_value---[Leaving]---with binary data string: {}--->", tmp_field);
 				return tmp_field;
 			}
 		}
@@ -93,15 +93,14 @@ class qube_psql : public qube_log {
             //SELECT a data block from the DB given a hash value....
             _qlog->debug("QUBE_FUSE::qpsql_get_block_from_hash---hash: {}--->", hash);
 			std::string data_block;
-			int res;
 			
             quoted_hash = qpsql_get_quoted_value(hash);
 			char *quoted_sql = (char *) malloc(strlen(qu_sql) + quoted_hash.length() + 1);
     		std::sprintf(quoted_sql, qu_sql, quoted_hash.c_str());
  
             _qlog->debug("QUBE_FUSE::qpsql_get_block_from_hash: SELECT QUERY = {}", quoted_sql);
-            res = qpsql_execQuery(quoted_sql);
-			if (res == 0) {
+            last_res = qpsql_execQuery(quoted_sql);
+			if (rec_count == 0) {
 				_qlog->warn("QUBE_FUSE::qpsql_get_block_from_hash: No records returned for hash.");
 				data_block = NO_RECORD_S;
 			} else {
@@ -129,16 +128,17 @@ class qube_psql : public qube_log {
 			if (PQresultStatus(last_ins) != PGRES_COMMAND_OK) {
 				res = 0;
 				_qlog->critical("QUBE_PSQL::qpsql_insert_hash: Data insert failed into DB. query = {}", tmp_sql);
-			} else {	
-				_qlog->debug("QUBE_PSQL::qpsql_insert_hash: Data inserted into DB. query = {}", tmp_sql);
-				res = 1;
+			} else {
+				char *tuples = PQcmdTuples(last_ins);
+				res = atoi(tuples);
+				_qlog->debug("QUBE_PSQL::qpsql_insert_hash: {:d} rows inserted into DB. query = {}", res, tmp_sql);
 			}
 
-            _qlog->debug("QUBE_PSQL::qpsql_insert_hash: ---[Leaving]---with hash: {}--->", quoted_hash);
+            _qlog->debug("QUBE_PSQL::qpsql_insert_hash: ---[Leaving]---with rows inserted: {:d}--->", res);
             return res;
         }
 
-		static int qpsql_execQuery(std::string qube_query) {
+		static PGresult* qpsql_execQuery(std::string qube_query) {
 			/* Create SQL statement */
 			_qlog->debug("QUBE_PSQL::qpsql_execQuery---qube_query {}--->", qube_query);
 			PGresult *res;
@@ -152,7 +152,7 @@ class qube_psql : public qube_log {
 			}
 
 			_qlog->debug("QUBE_PSQL::qpsql_execQuery---[Leaving]---with record count: {:d}--->", rec_count);
-			return rec_count;
+			return res;
 		}
 
 		static PGresult* qpsql_execInsert(std::string qube_query) {

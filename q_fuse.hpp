@@ -210,7 +210,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		}
 
 		static int qfs_mknod( const char *path, mode_t mode, dev_t rdev ) {
-			_qlog->debug("QUBE_FUSE::qfs_mknod---[{}]---[{:f}]---[{:f}]--->", path, mode, rdev );
+			_qlog->debug("QUBE_FUSE::qfs_mknod---[{}]---[{:d}]---[{:d}]--->", path, mode, rdev );
 			_qlog->flush();
 			int res;
 
@@ -225,16 +225,22 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 		static int qfs_mkdir( const char *path, mode_t mode )
 		{
-			_qlog->debug("QUBE_FUSE:qfs_mkdir---[{}]---[{:f}]--->", path, mode );
+			_qlog->debug("QUBE_FUSE:qfs_mkdir---[{}]---[{:d}]--->", path, mode );
 			int res;
 
-			res = ::mkdir(path, mode);
-			if (res == -1)
-				return -errno;
+			last_full_path = qfs_get_root_path(path);
+			res = ::mkdir(last_full_path, mode);
+			if (res == -1) {
+				_qlog->error("QUBE_FUSE::qfs_mkdir: Failed to make directory, Fullpath={} and path={}.", last_full_path, path);
+				res = -errno;
+			} else {
+				_qlog->debug("QUBE_FUSE::qfs_mkdir: Made directory with path, Fullpath={} and path={}.", last_full_path, path);
+				res = 0;
+			}  
 
 			_qlog->debug("QUBE_FUSE::qfs_mkdir---[Leaving]--->");
 			_qlog->flush();
-			return 0;
+			return res;
 		}
 
 		static int qfs_unlink (const char *path) {
@@ -247,9 +253,9 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 				_qlog->error("QUBE_FUSE::qfs_unlink: Failed to un-link path, Fullpath={} and path={}.", last_full_path, path);
 				res = -errno;
 			} else {
-				_qlog->error("QUBE_FUSE::qfs_unlink: Unlinked (deleted)->link path, Fullpath={} and path={}.", last_full_path, path);
+				_qlog->debug("QUBE_FUSE::qfs_unlink: Unlinked (deleted)->link path, Fullpath={} and path={}.", last_full_path, path);
 				res = 0;
-			}
+			}  
 
 			_qlog->debug("QUBE_FUSE::qfs_unlink---[Leaving]--->");
 			_qlog->flush();
@@ -260,12 +266,13 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			_qlog->debug("QUBE_FUSE::qfs_rmdir---[{}]--->", dirname );
 			int res;
 
-			res = ::rmdir(dirname);
+			last_full_path = qfs_get_root_path(dirname);
+			res = ::rmdir(last_full_path);
 			if (res == -1) {
-				_qlog->debug("QUBE_FUSE::qfs_rmdir: Failed to open path [{}]--->", dirname);
+				_qlog->debug("QUBE_FUSE::qfs_rmdir: Failed to remove directory [{}]--->", dirname);
 				res = -errno;
 			} else {
-				_qlog->debug("QUBE_FUSE::qfs_rmdir: opened path [{}]-->", dirname);
+				_qlog->debug("QUBE_FUSE::qfs_rmdir: Removed directory [{}]-->", dirname);
 				res = 0;
 			}
 			_qlog->debug("QUBE_FUSE::qfs_rmdir---[Leaving]--->");
@@ -383,9 +390,9 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 			size = original_size;
 			offset = original_offset;
-			_qlog->debug("QUBE_FUSE:qfs_read: Bytes of data read to buffer with qubeFS and filehandle {:d}.", fd);
+			_qlog->debug("QUBE_FUSE:qfs_read: {:d} Bytes of data read to buffer with filehandle {:d}, data is: {}.", actual_contents.length(), fd, actual_contents);
 
-			buffer = (char *) actual_contents.c_str();
+			memcpy( buffer, actual_contents.c_str(), actual_contents.length() );
 			_qlog->debug("QUBE_FUSE::qfs_read---[Leaving]--->");
 			_qlog->flush();
 			return actual_contents.length();
@@ -410,10 +417,10 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
         		//# Generate the test hashes
         		//###########################
         		offset = (offset * HASH_SIZE) / BLOCK_SIZE;
-				int fracBuffers = buffer.length() % BLOCK_SIZE;  // Ceiling doesn't work well for this. It doesn't have good decimal precision.
-				int numBuffers = buffer.length() / BLOCK_SIZE;	 // After storing full buffers, the mod(%) will be the partial buffer size left over.								          
+				int fracBuffers = buffer.length() % BLOCK_SIZE; // Most alg use ceiling, but Ceiling will not work long-term.
+				int numBuffers = buffer.length() / BLOCK_SIZE;	 								          
 																   
-				if (fracBuffers > 0) {numBuffers++;}             // If we have extra data, tghen we need to add a buffer frame to store it.
+				if (fracBuffers > 0) {numBuffers++;}             // If we have extra data, then we need to add a buffer frame to store it.
 				_qlog->debug("QUBE_FUSE::qfs_write: There are {:d} buffers in the data stream, including {:d} bytes in a fractional buffer.", numBuffers, fracBuffers);
 
         		for (int i=0; i < numBuffers; i++) {
@@ -427,8 +434,10 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
             		//##########################
                 	if ( qpsql_get_block_from_hash(block_hash) == NO_RECORD_S ) {
 						//hash doesn't exist, save it...
-						qpsql_insert_hash(block_hash, cur_block);
-						_qlog->debug("QUBE_FUSE::qfs_write: Saved to DB: hash: {} Block: {}", block_hash, cur_block);
+						int ins_rows = 0;
+						ins_rows = qpsql_insert_hash(block_hash, cur_block);
+						_qlog->debug("QUBE_FUSE::qfs_write: Saved to DB: hash: {} Block: {} in {:d} rows.", block_hash, cur_block, ins_rows);
+						if ( ins_rows < 1 ) {_qlog->critical("QUBE_FUSE::qfs_write: data was not saved to the DB, rows = {:d}}!", ins_rows);}
 					} else {
 						// Check for collisions and note if there is one.
 						//     !!!!!!!!!!!!!!!!!!!!!!!!
