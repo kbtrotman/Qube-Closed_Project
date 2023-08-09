@@ -1,0 +1,19 @@
+To be Done:
+----------------------------------------------------------------------------------------------------------------
+
+1. Add a reference count to the DB Table hashes.
+2. The key length should be 512-bit for sha_512, but after 128-bits it begins repeating. WTF? 128 is enough
+   for this application at present, but should be fixed or switch to sha_128/256.
+   a. Initial reference count added. Need to inc/dec count as necessary. Incrementing is simple enough. But
+      when to dec is a little more difficult. Compare all the hashes in a file to see if anything was dropped?
+3. Occationally when catting/outputting a file, a newline character isn't added to the end of text files. it
+   normally does, but clearly is inconsistent. Need to find out why and fix.
+4. Add in Hash collission routine. Collisions are ultra rare and I don;t think anyone else really handles them,
+   but I need to find out more and add something to deal with it.
+5. The logging is all over the place. Consolidate the logging into the logging class as much as possible.
+6. All the code is messy. I tend to get messy and simple as I finish something, so as usual need to clean up.
+7. Each fuse sub is nearlyu the same. One of the FS's I've consulted uses a system call subroutine to 
+   consolate everything into a more simple set of routines. Should consider that or clean it up.
+8. Change the name? Qube is cringe-worthy.
+9. Add locking via the DB. We need a global locking flag or maybe more than one.
+10. Implement xattr system calls. Right now I basically ignore them and most return errors, which are ignored.

@@ -75,4 +75,13 @@ class qube_FS {
             return write_result;
 		}
 
+        static int qfs_compare_existing_hashes(std::string *new_hashes) {
+			// ###########TBD##########
+			// COMPARE ORIGINAL FILE HASHES TO THE HASES NOW. IF FILE CHANGED, DECREMENT UN-USED HASH COUNTS.
+            // Could be an expensive search when used with locking for multiple edits. Need to examine.
+			// !!!!!!!!
+			// !!!!!!!!
+            return 0;
+        }        
+
 };

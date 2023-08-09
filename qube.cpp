@@ -31,8 +31,11 @@ class qube_log {
 				auto file_sink = std::make_shared<spdlog::sinks::daily_file_sink_st>("/var/log/qube.log", 23, 59);
         		_qlog = std::make_shared<spdlog::logger>("qube_log", file_sink);
 
-				_qlog->set_level(spdlog::level::debug);
-				_qlog->debug("qube_log::qube_log: *** Qube logging started. ***");
+				_qlog->set_level(spdlog::level::trace);
+				_qlog->flush_on(spdlog::level::err);
+				qube_log::_qlog->info("==========================================================");
+				_qlog->info("QUBE_LOG::qube_log:   ***** Qube logging started. *****");
+				qube_log::_qlog->info("==========================================================");
 				_qlog->flush();
 				logger_init = true;
 			}			
@@ -69,7 +72,7 @@ class qube_hash : public qube_psql {
   			SHA512_Update(&sha512, str.c_str(), str.size());
   			SHA512_Final(hash, &sha512);
 
-			for(int i = 0; i < SHA512_DIGEST_LENGTH; i++){
+			for(int i = 0; i < (SHA512_DIGEST_LENGTH); i++){
 				ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>( hash[i] );
 			}
 			_qlog->debug("qube_hash::get_sha512_hash---[Leaving]---with hash string---[{}]--->.", ss.str());
@@ -92,9 +95,9 @@ int main( int argc, char *argv[] )
 
 	qube_fuse qf;
 
-	qube_log::_qlog->info("===============================\n");
-	qube_log::_qlog->info("=== PG Server version = {:d} ===", qf.qpsql_getServerVers());
-	qube_log::_qlog->info("===============================\n");	
+	qube_log::_qlog->info("====================================");
+	qube_log::_qlog->info("===  PG Server version = {:d}  ===", qf.qpsql_getServerVers());
+	qube_log::_qlog->info("====================================");	
 
     qube_log::_qlog->info("=================================");
     qube_log::_qlog->info("=====  Filesystem Starting ======");

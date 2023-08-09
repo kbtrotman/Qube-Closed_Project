@@ -399,7 +399,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		}
 
 		static int qfs_write( const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *info ) {
-			_qlog->debug("QUBE_FUSE::qfs_write---[{}]---[{}]]-->", path, buf);
+			_qlog->debug("QUBE_FUSE::qfs_write---[{}]---[{}]-->", path, buf);
 			double original_offset;
 			std::string block_hash;
 			std::string hash_buffer;
@@ -439,14 +439,25 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 						_qlog->debug("QUBE_FUSE::qfs_write: Saved to DB: hash: {} Block: {} in {:d} rows.", block_hash, cur_block, ins_rows);
 						if ( ins_rows < 1 ) {_qlog->critical("QUBE_FUSE::qfs_write: data was not saved to the DB, rows = {:d}}!", ins_rows);}
 					} else {
-						// Check for collisions and note if there is one.
-						//     !!!!!!!!!!!!!!!!!!!!!!!!
+						// Handle Collisions:
+						// Hash does exist, check if the data block in the DB is the same...
+						// if (! (cur_block == ) ) {
+							// Then we have a hard collision. Let's deal with it.
+
+						// }
+
+
 						// If no collisions, then update the use count and
 						// statistics.
 						//     !!!!!!!!!!!!!!!!!!!!!!!!
+
+						// Increment use count.
 					}
 
 				}
+
+				qfs_compare_existing_hashes( &hash_buffer );
+
 				//Write the results to the file we're modifying...					
 				_qlog->debug("QUBE_FUSE::qfs_write: End Hash Buffer: {}", hash_buffer);
 				res = qfs_write_to_file( info->fh, hash_buffer.c_str(), hash_buffer.length(), offset );
@@ -456,7 +467,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			offset = original_offset;
 			_qlog->debug("QUBE_FUSE::qfs_write---[Leaving]--->");
 			_qlog->flush();
-			//return res;  // If we return the actual size we wrote, it will break fuse & return I/O error.
+			//return res;
 			return size;   // Fuse expects us to write the same data we recieved into this sub. :P
 		}
 

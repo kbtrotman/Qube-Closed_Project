@@ -24,6 +24,7 @@ class qube_psql : public qube_log {
 		static bool 	  psql_init;
 		static std::string quoted_hash;
 		static std::string quoted_block;
+		static std::string quoted_count;
 		static const char *qu_sql;
         static const char *ins_sql;
 
@@ -31,7 +32,7 @@ class qube_psql : public qube_log {
 			_qlog->debug("Psql Init------>");
 
 			qu_sql = "SELECT block FROM hashes WHERE hash = %s";
-			ins_sql = "INSERT INTO hashes VALUES (%s, %s)";
+			ins_sql = "INSERT INTO hashes VALUES (%s, %s, %d)";
 
 			if (!psql_init) {
 				conn = PQconnectdb(DBSTRING);
@@ -118,8 +119,9 @@ class qube_psql : public qube_log {
 
             quoted_hash = qpsql_get_quoted_value(hash);
             quoted_block = qpsql_get_quoted_value(data_block);
-            char *quoted_sql = (char *) malloc(strlen(ins_sql) + quoted_hash.length() + quoted_block.length() + 1);
-            std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), quoted_block.c_str());
+			//quoted_count = qpsql_get_quoted_value("1");
+            char *quoted_sql = (char *) malloc(strlen(ins_sql) + quoted_hash.length() + quoted_block.length() + quoted_count.length() + 1);
+            std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), quoted_block.c_str(), 1 );
 			std::string tmp_sql(quoted_sql);
 			int res;
 
@@ -186,5 +188,6 @@ int qube_psql::col= 0;
 bool qube_psql::psql_init = false;
 std::string qube_psql::quoted_hash = "";
 std::string qube_psql::quoted_block = "";
+std::string qube_psql::quoted_count = "";
 const char *qube_psql::qu_sql = "SELECT block FROM hashes WHERE hash = %s";
 const char *qube_psql::ins_sql = "INSERT INTO hashes VALUES (%s, %s)";
