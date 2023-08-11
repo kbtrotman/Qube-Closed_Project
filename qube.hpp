@@ -23,7 +23,9 @@
 #include <errno.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#ifdef HAVE_SETXATTR
 #include <sys/xattr.h>
+#endif
 
 // C++ incs
 #include <cstring>
@@ -35,14 +37,38 @@
 #include <iomanip>
 #include <cmath>
 
-// Constants
+// Simple Macros
+// & Constants
 //#############################
 #define BLOCK_SIZE 4096
 #define HASH_SIZE 128
 
 #define NO_HASH_S "NO_ENC_HASHES_RETURNED"
 
-// Database configuration
+#define TRACE _qlog->debug
+#define DEBUG _qlog->debug
+#define INFO _qlog->debug
+#define WARN _qlog->debug
+#define ERROR _qlog->debug
+#define CRITICAL _qlog->debug
+#define FLUSH _qlog->flush()
+
+#define PRINT_CONN_STRING(s) \
+    ([](const auto& s){ \
+        std::ostringstream oss; \
+        oss << "proto_major: " << s->proto_major << ", proto_minor: " << s->proto_minor; \
+        return oss.str(); \
+    })(s)
+
+#define PRINT_STBUFF_STRING(s) \
+    ([](const auto& s){ \
+        std::ostringstream oss; \
+        oss << "st_mode: " << s->st_mode << ", st_uid: " << s->st_uid << ", st_size " << s->st_size << ", st_atime: " << s->st_atime; \
+        return oss.str(); \
+    })(s)
+
+
+// Database Constants
 //#############################
 #define DATABASE "fuse"
 #define USER "postgres"
@@ -66,12 +92,13 @@ struct UserMap {
 };
 
 
-/* SETTINGS */
+// SETTINGS & Config stuff
+//############################
+
 static struct Settings {
     const char *progname;
     std::string *root_dir;
-//    std::string *source_dir;
-    char *mount_point;  //Mount point is really the same as root_dir?? Is this redundant, or can te be different?
+    char *mount_point;  //Mount point is really the same as root_dir?? Is this redundant, or can they be different?
     int src_len;
     int mnt_len; /* caches strlen(mntdest) */
     int src_fd;
@@ -145,20 +172,4 @@ static struct Settings {
     gid_t gid_offset;
 
 } settings;
-
-
-#define PRINT_CONN_STRING(s) \
-    ([](const auto& s){ \
-        std::ostringstream oss; \
-        oss << "proto_major: " << s->proto_major << ", proto_minor: " << s->proto_minor; \
-        return oss.str(); \
-    })(s)
-
-#define PRINT_STBUFF_STRING(s) \
-    ([](const auto& s){ \
-        std::ostringstream oss; \
-        oss << "st_mode: " << s->st_mode << ", st_uid: " << s->st_uid << ", st_size " << s->st_size << ", st_atime: " << s->st_atime; \
-        return oss.str(); \
-    })(s)
-
     

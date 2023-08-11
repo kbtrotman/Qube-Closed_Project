@@ -33,10 +33,10 @@ class qube_log {
 
 				_qlog->set_level(spdlog::level::trace);
 				_qlog->flush_on(spdlog::level::err);
-				qube_log::_qlog->info("==========================================================");
-				_qlog->info("QUBE_LOG::qube_log:   ***** Qube logging started. *****");
-				qube_log::_qlog->info("==========================================================");
-				_qlog->flush();
+				qube_log::INFO("==========================================================");
+				INFO("QUBE_LOG::qube_log:   ***** Qube logging started. *****");
+				qube_log::INFO("==========================================================");
+				FLUSH;
 				logger_init = true;
 			}			
 		}
@@ -61,12 +61,12 @@ class qube_hash : public qube_psql {
 	public:
 
 		qube_hash () {
-			_qlog->debug("qube_hash::qube_hash: Hash Init--->");
-			_qlog->flush();
+			TRACE("qube_hash::qube_hash: Hash Init--->");
+			FLUSH;
 		}
 
 		static std::string get_sha512_hash(const std::string str){
-			_qlog->debug("qube_hash::get_sha512_hash---[{}]--->", str);
+			TRACE("qube_hash::get_sha512_hash---[{}]--->", str);
   			SHA512_CTX sha512;
   			SHA512_Init(&sha512);
   			SHA512_Update(&sha512, str.c_str(), str.size());
@@ -75,7 +75,7 @@ class qube_hash : public qube_psql {
 			for(int i = 0; i < (SHA512_DIGEST_LENGTH); i++){
 				ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>( hash[i] );
 			}
-			_qlog->debug("qube_hash::get_sha512_hash---[Leaving]---with hash string---[{}]--->.", ss.str());
+			TRACE("qube_hash::get_sha512_hash---[Leaving]---with hash string---[{}]--->.", ss.str());
 
   			return ss.str();
 		}
