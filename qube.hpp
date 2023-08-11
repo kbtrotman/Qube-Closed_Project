@@ -45,12 +45,12 @@
 
 #define NO_HASH_S "NO_ENC_HASHES_RETURNED"
 
-#define TRACE _qlog->debug
+#define TRACE _qlog->trace
 #define DEBUG _qlog->debug
-#define INFO _qlog->debug
-#define WARN _qlog->debug
-#define ERROR _qlog->debug
-#define CRITICAL _qlog->debug
+#define INFO _qlog->info
+#define WARN _qlog->warn
+#define ERROR _qlog->error
+#define CRITICAL _qlog->critical
 #define FLUSH _qlog->flush()
 
 #define PRINT_CONN_STRING(s) \

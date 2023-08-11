@@ -33,9 +33,9 @@ class qube_log {
 
 				_qlog->set_level(spdlog::level::trace);
 				_qlog->flush_on(spdlog::level::err);
-				qube_log::INFO("==========================================================");
-				INFO("QUBE_LOG::qube_log:   ***** Qube logging started. *****");
-				qube_log::INFO("==========================================================");
+				INFO("==========================================================");
+				INFO("QUBE_LOG::qube_log:   ***** Qube logging started. *****   ");
+				INFO("==========================================================");
 				FLUSH;
 				logger_init = true;
 			}			

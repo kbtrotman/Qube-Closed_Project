@@ -363,8 +363,6 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			// Change our hashes in the file into blocks from the DB....
 			original_offset = offset;
 			original_size = size;
-			//offset = (offset * HASH_SIZE);
-			//size = ((size / HASH_SIZE) * BLOCK_SIZE);
 
 			::lseek(fd, offset, SEEK_SET);
 			DEBUG("QUBE_FUSE:qfs_read: seeked to offset {:d} in file handle {:d} to read size {:d}.", offset, fd, size);
@@ -443,11 +441,8 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 						// }
 
 
-						// If no collisions, then update the use count and
-						// statistics.
-						//     !!!!!!!!!!!!!!!!!!!!!!!!
-
-						// Increment use count.
+						// If no collisions, then increment the use count and statistics.
+						qpsql_incr_hash_count(block_hash);
 					}
 
 				}

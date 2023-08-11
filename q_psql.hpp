@@ -27,12 +27,16 @@ class qube_psql : public qube_log {
 		static std::string quoted_count;
 		static const char *qu_sql;
         static const char *ins_sql;
+		static const char *use_incr;
+		static const char *use_decr;
 
 		qube_psql () {
 			TRACE("Psql Init------>");
 
 			qu_sql = "SELECT block, use_count FROM hashes WHERE hash = %s";
 			ins_sql = "INSERT INTO hashes VALUES (%s, %s, %d)";
+			use_incr = "UPDATE hashes set use_count = use_count + 1 WHERE hash = %s";
+			use_decr = "UPDATE hashes set use_count = use_count - 1 WHERE hash = %s";
 
 			if (!psql_init) {
 				conn = PQconnectdb(DBSTRING);
@@ -140,6 +144,34 @@ class qube_psql : public qube_log {
             return res;
         }
 
+		static PGresult* qpsql_incr_hash_count(std::string hash) {
+			TRACE("QUBE_PSQL::qpsql_incr_hash_count---hash {}--->", hash);
+			PGresult *res;
+			
+			quoted_hash = qpsql_get_quoted_value(hash);
+			char *quoted_sql = (char *) malloc(strlen(use_incr) + quoted_hash.length() + 1);
+            std::sprintf(quoted_sql, use_incr, quoted_hash.c_str(), 1 );
+
+			last_res = qpsql_execQuery(quoted_sql);
+
+			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
+			return res;
+		}
+
+		static PGresult* qpsql_decr_hash_count(std::string hash) {
+			TRACE("QUBE_PSQL::qpsql_decr_hash_count---hash {}--->", hash);
+			PGresult *res;
+			
+			quoted_hash = qpsql_get_quoted_value(hash);
+			char *quoted_sql = (char *) malloc(strlen(use_decr) + quoted_hash.length() + 1);
+            std::sprintf(quoted_sql, use_decr, quoted_hash.c_str(), 1 );
+
+			last_res = qpsql_execQuery(quoted_sql);
+
+			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
+			return res;
+		}
+
 		static PGresult* qpsql_execQuery(std::string qube_query) {
 			/* Create SQL statement */
 			TRACE("QUBE_PSQL::qpsql_execQuery---qube_query {}--->", qube_query);
@@ -189,5 +221,7 @@ bool qube_psql::psql_init = false;
 std::string qube_psql::quoted_hash = "";
 std::string qube_psql::quoted_block = "";
 std::string qube_psql::quoted_count = "";
-const char *qube_psql::qu_sql = "SELECT block FROM hashes WHERE hash = %s";
-const char *qube_psql::ins_sql = "INSERT INTO hashes VALUES (%s, %s)";
+const char *qube_psql::qu_sql = "";
+const char *qube_psql::ins_sql = "";
+const char *qube_psql::use_incr = "";
+const char *qube_psql::use_decr = "";
