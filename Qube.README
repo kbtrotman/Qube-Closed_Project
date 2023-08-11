@@ -5,12 +5,6 @@
 Qube-FS Filesystem
 ------------------
 
-1. What is the Qube Filesystem:
-Qube is several things. Many things actually. The eventual goal of this is to have a hardware appliance
-built on the entire principal that will eventually be Qube. IE: One large storage array that can manage
-storage for an entire organization. However, that's a big vision that is far off. So, for now, let's stick 
-to just the software that sets up the Qube Filesystem itself.
-
 Qube software is:
 Extending the traditional Filesystem to the 4th dimention. A new type of filesystem for the new emerging 
 workloads of organzitions that find themselves now struggling with how to store and keep data long-term.
@@ -25,27 +19,10 @@ new groupings, and better file versioning than has ever existed before in tradit
 addition to the items mentioned above). In addition, many of these filesystems belong to companies that
 need to track things like data classification, sensitivity, and ownership trees over the lifetime of the
 data. That is a huge ask, but if broken down into solvable taks, it's not as hard to accomplish if we
-ignore the entire way things have always been done and build a new framework from the ground-up.
+ignore the way things have always been done and build a new framework from the ground-up.
     
-    A. First, to share de-dupe across multiple hosts and multiple devices, the hash table has to be A
-    shared architecture. There are a couple of ways to accomplish that. One is to simply make the hash
-    table available via the network, and the other is to make a fully shareable filesystem, such as A
-    global, or distributed, filesystem. Qube aims for the first task, however, to support object-based
-    storage, a locking mechanism would need to be supported also, so the side-effect of using both of
-    those is that Qube becomes a fully distributed filesystem whether we intend for it to be or not.
 
-    B. The second idea floated here is the grouping of files. The internet has made the tree structure
-    mostly obsolete. A lot of organizations now use DBs to store data for the internet simply because
-    the cross of object-based storage and internet hosted files crosses at products like SharePoint and
-    Oracle anyway. Hashtags, message trails, and such have replaced the traditional groupings for files,
-    and we're at a point where the traditional filesystem is just a low-level base of operations that
-    doesn't necessarily include any of the data a developer would like to be attached to that file (which
-    is one reason why DBs are common now for internet-based files). Also, today the standard group idents
-    for a file would reference the team we directly work with, but teams have become more fluid, regionally-
-    dispersed, and less well-defined. It would not take much more space to include tagging, versioning 
-    (mail-chaining), and extended team-based groupings with a file.  
-
-2. So, now that we see the vision, where is Qube right now?
+So, now that we see the vision, where is Qube right now?
 Uhh, basically beginning and no better than a usual small backup filestem written using fuse. To allow for
 testing, the beginning stages of Qube are written in fuse, and the de-dupe ability is the first thing that
 has been targetted so far. The intent is to then add the meta-data into an ext4-like structure soon. So,

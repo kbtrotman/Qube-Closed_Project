@@ -1,0 +1,25 @@
+How to use this example FS:
+-------------------------------------
+ * NOTE: This is a programming example only and not meant for general consumption.
+
+ 1. Install fuse 3. (See Fuse3's own docs.)
+ 2. Install spdlog. (See spdlogs own docs.)
+ 3. Install Postgres. (See Postgres docs.)
+ 4. In postgres, setup a DB called "fuse" and under that db, setup a table called "hashes".
+ 5. The hashes table must have 3 fields:
+    hash:   char varying 128
+    block:  bytea 4096
+    use_count: integer
+ 6. Edit qube.hpp and change the postgres user data to include your user's username, password, and
+    host name/IP.
+ 7. Compile using:
+     g++ -Wall -g qube.cpp -o qubeFS -I /usr/include/fuse3 -I /usr/include/spdlog -lpq -lcrypto -lfuse3 -D_FILE_OFFSET_BITS=64 -pedantic-errors
+
+8. mkdir -p /mnt/Qdata
+9. mkdir -p /mnt/Qtest
+   Note: Qdata whill be where the de-dupe filesystem mounts. Qtest will be the raw filesystem that
+         fuse uses to store the actual hash keys. If you can a file while under Qtest, it will be
+         a jumbled list of hex letters that represent a list of hases. If you cat the same file in
+         Qdata, the file will query the database and return the actual data you stored in that file.
+10. Run the example with the command: qubeFS -f -s -d /mnt/Qtest /mnt/Qdata
+
