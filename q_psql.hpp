@@ -62,14 +62,14 @@ class qube_psql : public qube_log {
 		}
 
 
-		// All globally static methods below this point.....
+		// All globally static methods below this point. They are interrupt-driven......
 		static std::string qpsql_get_quoted_value(std::string in_string) {
     		TRACE("QUBE_PSQL::qpsql_get_quoted_value---instr: {}--->", in_string);
 			char *escaped_val = PQescapeLiteral(conn, in_string.c_str(), in_string.length());
     		if (escaped_val == NULL) {
         		ERROR("QUBE_PSQL::qpsql_get_quoted_value: Failed to escape a value: {} with connection {:d}.", in_string, PQerrorMessage(conn));
 				qpsql_do_exit(4);
-    		} 
+    		}
 			std::string tmp_quote(escaped_val);
 			PQfreemem(escaped_val);
 			TRACE("QUBE_PSQL::qpsql_get_quoted_value---[Leaving]---with quoted string: {}--->", tmp_quote);
@@ -119,7 +119,7 @@ class qube_psql : public qube_log {
 
         static int qpsql_insert_hash(std::string hash, std::string data_block) {
             //INSERT a hash into the DB....
-            TRACE("QUBE_PSQL::qpsql_insert_hash---hash: {}---block:{}--->", hash, data_block);
+            TRACE("QUBE_PSQL::qpsql_insert_hash---hash: {}---block: {}--->", hash, data_block);
 
             quoted_hash = qpsql_get_quoted_value(hash);
             quoted_block = qpsql_get_quoted_value(data_block);
@@ -152,7 +152,7 @@ class qube_psql : public qube_log {
 			char *quoted_sql = (char *) malloc(strlen(use_incr) + quoted_hash.length() + 1);
             std::sprintf(quoted_sql, use_incr, quoted_hash.c_str(), 1 );
 
-			last_res = qpsql_execQuery(quoted_sql);
+			res = qpsql_execQuery(quoted_sql);
 
 			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
 			return res;
@@ -166,7 +166,7 @@ class qube_psql : public qube_log {
 			char *quoted_sql = (char *) malloc(strlen(use_decr) + quoted_hash.length() + 1);
             std::sprintf(quoted_sql, use_decr, quoted_hash.c_str(), 1 );
 
-			last_res = qpsql_execQuery(quoted_sql);
+			res = qpsql_execQuery(quoted_sql);
 
 			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
 			return res;

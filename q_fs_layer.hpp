@@ -23,7 +23,7 @@ class qube_FS {
 
         }
 
-
+        // All globally static methods below this point. They are interrupt-driven......
         static char* qfs_get_root_path(const char* path) {
             qube_log::TRACE("QUBE_FS::qfs_get_root_path---[path = {}]--->", path);
 
@@ -55,7 +55,6 @@ class qube_FS {
 			qube_log::TRACE("QUBE_FS::qfs_Write_to_file---[{:d}]---[{}]---[{:d}]>", fd, data_content, size);
             // Here we are writing only the hashes to the actual filesystem. Data blocks that are normally
             // in a filesystem are written into the DB via the qpsql class.
-            
             int write_result;
 
             //Seek to our writing offset point before doing anythign else

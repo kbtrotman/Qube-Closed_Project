@@ -41,7 +41,7 @@
 // & Constants
 //#############################
 #define BLOCK_SIZE 4096
-#define HASH_SIZE 128
+#define HASH_SIZE 128   // The hexidecimal hash size is twice as long as the 64-char key (512-bit key).
 
 #define NO_HASH_S "NO_ENC_HASHES_RETURNED"
 
@@ -105,61 +105,6 @@ static struct Settings {
     int mnt_fd;
     int file_fd;
 
-    struct permchain *permchain; /* permission bit rules. see permchain.h */
-    uid_t new_uid; /* user-specified uid */
-    gid_t new_gid; /* user-specified gid */
-    uid_t create_for_uid;
-    gid_t create_for_gid;
-    char *original_working_dir;
-    mode_t original_umask;
-
-    UserMap *usermap; /* From the --map option. */
-    UserMap *usermap_reverse;
-
-    enum CreatePolicy {
-        CREATE_AS_USER,
-        CREATE_AS_MOUNTER
-    } create_policy;
-
-    struct permchain *create_permchain; /* the --create-with-perms option */
-
-    enum ChownPolicy {
-        CHOWN_NORMAL,
-        CHOWN_IGNORE,
-        CHOWN_DENY
-    } chown_policy;
-
-    enum ChgrpPolicy {
-        CHGRP_NORMAL,
-        CHGRP_IGNORE,
-        CHGRP_DENY
-    } chgrp_policy;
-
-    enum ChmodPolicy {
-        CHMOD_NORMAL,
-        CHMOD_IGNORE,
-        CHMOD_DENY
-    } chmod_policy;
-
-    int chmod_allow_x;
-
-    struct permchain *chmod_permchain; /* the --chmod-filter option */
-
-    enum XAttrPolicy {
-        XATTR_UNIMPLEMENTED,
-        XATTR_READ_ONLY,
-        XATTR_READ_WRITE
-    } xattr_policy;
-
-    int delete_deny;
-    int rename_deny;
-
-    int mirrored_users_only;
-    uid_t *mirrored_users;
-    int num_mirrored_users;
-    gid_t *mirrored_members;
-    int num_mirrored_members;
-
     int hide_hard_links;
     int resolve_symlinks;
     int realistic_permissions;
@@ -172,4 +117,4 @@ static struct Settings {
     gid_t gid_offset;
 
 } settings;
-    
+  

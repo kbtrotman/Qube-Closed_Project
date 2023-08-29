@@ -67,6 +67,12 @@ class qube_hash : public qube_psql {
 
 		static std::string get_sha512_hash(const std::string str){
 			TRACE("qube_hash::get_sha512_hash---[{}]--->", str);
+			
+			// We have static sections, so let's blank everything to be safe here.
+			std::memset(hash, 0, SHA512_DIGEST_LENGTH);
+			ss.str("");
+			ss.clear();
+
   			SHA512_CTX sha512;
   			SHA512_Init(&sha512);
   			SHA512_Update(&sha512, str.c_str(), str.size());

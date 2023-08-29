@@ -148,7 +148,10 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 		This isn't nearly as hard as it sounds. It's easier to test on fuse and then migrate to physical disk sectors later. This can be done by
 		migrating the code to being a device-driver that loads a filesystem module.
 
+		All globally static methods below this point. They are interrupt-driven......
+
 		*/
+
 		static void *qfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg){
 				TRACE("QUBE_FUSE::qfs_init:---{}--->",  PRINT_CONN_STRING(conn) );
 
@@ -174,7 +177,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			DEBUG("QUBE_FUSE::qfs_getattr: Fullpath={} and path={}.", last_full_path, path);
 
 			if (::lstat(last_full_path, stbuf) == -1) {
-				WARN("QUBE_FUSE::qfs_getattr: Failed to open path, Fullpath={} and path={}.Is it a new file?", last_full_path, path);
+				WARN("QUBE_FUSE::qfs_getattr: Failed to open path, Fullpath={} and path={}. Is it a new file?", last_full_path, path);
 				retstat = -errno;
 			} else {
 				DEBUG("QUBE_FUSE::qfs_getattr: Stat-ed, Fullpath={} and path={}.", last_full_path, path);
@@ -352,32 +355,36 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			TRACE("QUBE_FUSE:qfs_read---[{}]--->", path );
 			int fd;
 			int res;
+			int num_in_a_partial = size % 4096;
+			int num_of_hashes = size / 4096;
 			int original_offset;
 			int original_size;
-			char tmpbuffer[4096];
+			char tmpbuffer[HASH_SIZE];
 			std::string block_hash;
 			std::string actual_contents;
 
+			if (num_in_a_partial > 0) { num_of_hashes++; }
 			fd = fi->fh;
 
 			// Change our hashes in the file into blocks from the DB....
 			original_offset = offset;
 			original_size = size;
-
+			offset = (original_offset / 4096) + (original_offset % 4096);
 			::lseek(fd, offset, SEEK_SET);
 			DEBUG("QUBE_FUSE:qfs_read: seeked to offset {:d} in file handle {:d} to read size {:d}.", offset, fd, size);
 
-			res = pread(fd, tmpbuffer, size, offset);
-			if (res == -1) {
-				ERROR("QUBE_FUSE:qfs_read: error reading from provided file handle {:d}.", fd);
-				res = -errno;
-				return 0;
-			}
+			for (int i=0; i < num_of_hashes; i++) {
 
-			DEBUG("QUBE_FUSE:qfs_read: read {} bytes into temp buffer from filehandle {:d}, # of hashes {:d}.", strlen(tmpbuffer), fd, (strlen(tmpbuffer) / HASH_SIZE));
+				res = pread(fd, tmpbuffer, HASH_SIZE, (offset + (i * HASH_SIZE)) );
+				if (res == -1) {
+					ERROR("QUBE_FUSE:qfs_read: error reading from provided file handle {:d}.", fd);
+					res = -errno;
+					return 0;
+				}
+
+				DEBUG("QUBE_FUSE:qfs_read: read {} bytes into temp buffer from filehandle {:d}, # of hashes {:d}.", strlen(tmpbuffer), fd, (strlen(tmpbuffer) / HASH_SIZE));
 			
-			std::string read_buffer(tmpbuffer);
-			for (int i=0; i < (int(read_buffer.length() / HASH_SIZE)); i++) {
+				std::string read_buffer(tmpbuffer);
 				block_hash = read_buffer.substr((i * HASH_SIZE), ((i + 1) * HASH_SIZE));
 				actual_contents += qpsql_get_block_from_hash(block_hash);
 			}
@@ -431,7 +438,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 						int ins_rows = 0;
 						ins_rows = qpsql_insert_hash(block_hash, cur_block);
 						DEBUG("QUBE_FUSE::qfs_write: Saved to DB: hash: {} Block: {} in {:d} rows.", block_hash, cur_block, ins_rows);
-						if ( ins_rows < 1 ) {_qlog->critical("QUBE_FUSE::qfs_write: data was not saved to the DB, rows = {:d}}!", ins_rows);}
+						if ( ins_rows < 1 ) {ERROR("QUBE_FUSE::qfs_write: data was not saved to the DB, rows = {:d}}!", ins_rows);}
 					} else {
 						// Handle Collisions:
 						// Hash does exist, check if the data block in the DB is the same...

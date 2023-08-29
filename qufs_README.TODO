@@ -17,3 +17,4 @@ To be Done:
 8. Change the name? Qube is cringe-worthy.
 9. Add locking via the DB. We need a global locking flag or maybe more than one.
 10. Implement xattr system calls. Right now I basically ignore them and most return errors, which are ignored.
+11. Implement a Local Caching queue (FIFO cache) to the client filesystem.
