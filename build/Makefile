@@ -147,19 +147,6 @@ depend:
 .PHONY : depend
 
 #=============================================================================
-# Target rules for targets named qubeFS
-
-# Build rule for target.
-qubeFS: cmake_check_build_system
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 qubeFS
-.PHONY : qubeFS
-
-# fast build rule for target.
-qubeFS/fast:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/qubeFS.dir/build.make CMakeFiles/qubeFS.dir/build
-.PHONY : qubeFS/fast
-
-#=============================================================================
 # Target rules for targets named ContinuousSubmit
 
 # Build rule for target.
@@ -184,6 +171,19 @@ ContinuousMemCheck: cmake_check_build_system
 ContinuousMemCheck/fast:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousMemCheck.dir/build.make CMakeFiles/ContinuousMemCheck.dir/build
 .PHONY : ContinuousMemCheck/fast
+
+#=============================================================================
+# Target rules for targets named QubeFS
+
+# Build rule for target.
+QubeFS: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 QubeFS
+.PHONY : QubeFS
+
+# fast build rule for target.
+QubeFS/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/QubeFS.dir/build.make CMakeFiles/QubeFS.dir/build
+.PHONY : QubeFS/fast
 
 #=============================================================================
 # Target rules for targets named ContinuousConfigure
@@ -528,7 +528,7 @@ qube.o: qube.cpp.o
 
 # target to build an object file
 qube.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/qubeFS.dir/build.make CMakeFiles/qubeFS.dir/qube.cpp.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/QubeFS.dir/build.make CMakeFiles/QubeFS.dir/qube.cpp.o
 .PHONY : qube.cpp.o
 
 qube.i: qube.cpp.i
@@ -536,7 +536,7 @@ qube.i: qube.cpp.i
 
 # target to preprocess a source file
 qube.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/qubeFS.dir/build.make CMakeFiles/qubeFS.dir/qube.cpp.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/QubeFS.dir/build.make CMakeFiles/QubeFS.dir/qube.cpp.i
 .PHONY : qube.cpp.i
 
 qube.s: qube.cpp.s
@@ -544,7 +544,7 @@ qube.s: qube.cpp.s
 
 # target to generate assembly for a file
 qube.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/qubeFS.dir/build.make CMakeFiles/qubeFS.dir/qube.cpp.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/QubeFS.dir/build.make CMakeFiles/QubeFS.dir/qube.cpp.s
 .PHONY : qube.cpp.s
 
 # Help Target
@@ -586,7 +586,7 @@ help:
 	@echo "... NightlySubmit"
 	@echo "... NightlyTest"
 	@echo "... NightlyUpdate"
-	@echo "... qubeFS"
+	@echo "... QubeFS"
 	@echo "... qube.o"
 	@echo "... qube.i"
 	@echo "... qube.s"

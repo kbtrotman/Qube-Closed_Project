@@ -24,7 +24,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_link_libraries(${PROJECT_NAME} PUBLIC pq crypto fuse3)
 
-target_compile_options(qubeFS PUBLIC -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors)
+target_compile_options(${PROJECT_NAME} PUBLIC -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors)
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

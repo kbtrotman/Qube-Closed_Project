@@ -63,7 +63,7 @@ CMAKE_BINARY_DIR = /home/trotmkeb/c/Qube/build
 # Directory level rules for the build root directory
 
 # The main recursive "all" target.
-all: CMakeFiles/qubeFS.dir/all
+all: CMakeFiles/QubeFS.dir/all
 .PHONY : all
 
 # The main recursive "preinstall" target.
@@ -71,9 +71,9 @@ preinstall:
 .PHONY : preinstall
 
 # The main recursive "clean" target.
-clean: CMakeFiles/qubeFS.dir/clean
 clean: CMakeFiles/ContinuousSubmit.dir/clean
 clean: CMakeFiles/ContinuousMemCheck.dir/clean
+clean: CMakeFiles/QubeFS.dir/clean
 clean: CMakeFiles/ContinuousConfigure.dir/clean
 clean: CMakeFiles/ExperimentalSubmit.dir/clean
 clean: CMakeFiles/ExperimentalMemCheck.dir/clean
@@ -101,32 +101,6 @@ clean: CMakeFiles/ContinuousTest.dir/clean
 clean: CMakeFiles/ContinuousUpdate.dir/clean
 clean: CMakeFiles/ExperimentalBuild.dir/clean
 .PHONY : clean
-
-#=============================================================================
-# Target rules for target CMakeFiles/qubeFS.dir
-
-# All Build rule for target.
-CMakeFiles/qubeFS.dir/all:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/qubeFS.dir/build.make CMakeFiles/qubeFS.dir/depend
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/qubeFS.dir/build.make CMakeFiles/qubeFS.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/trotmkeb/c/Qube/build/CMakeFiles --progress-num=1,2 "Built target qubeFS"
-.PHONY : CMakeFiles/qubeFS.dir/all
-
-# Build rule for subdir invocation for target.
-CMakeFiles/qubeFS.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/trotmkeb/c/Qube/build/CMakeFiles 2
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/qubeFS.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/trotmkeb/c/Qube/build/CMakeFiles 0
-.PHONY : CMakeFiles/qubeFS.dir/rule
-
-# Convenience name for target.
-qubeFS: CMakeFiles/qubeFS.dir/rule
-.PHONY : qubeFS
-
-# clean rule for target.
-CMakeFiles/qubeFS.dir/clean:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/qubeFS.dir/build.make CMakeFiles/qubeFS.dir/clean
-.PHONY : CMakeFiles/qubeFS.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/ContinuousSubmit.dir
@@ -179,6 +153,32 @@ ContinuousMemCheck: CMakeFiles/ContinuousMemCheck.dir/rule
 CMakeFiles/ContinuousMemCheck.dir/clean:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/ContinuousMemCheck.dir/build.make CMakeFiles/ContinuousMemCheck.dir/clean
 .PHONY : CMakeFiles/ContinuousMemCheck.dir/clean
+
+#=============================================================================
+# Target rules for target CMakeFiles/QubeFS.dir
+
+# All Build rule for target.
+CMakeFiles/QubeFS.dir/all:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/QubeFS.dir/build.make CMakeFiles/QubeFS.dir/depend
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/QubeFS.dir/build.make CMakeFiles/QubeFS.dir/build
+	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --progress-dir=/home/trotmkeb/c/Qube/build/CMakeFiles --progress-num=1,2 "Built target QubeFS"
+.PHONY : CMakeFiles/QubeFS.dir/all
+
+# Build rule for subdir invocation for target.
+CMakeFiles/QubeFS.dir/rule: cmake_check_build_system
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/trotmkeb/c/Qube/build/CMakeFiles 2
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/QubeFS.dir/all
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/trotmkeb/c/Qube/build/CMakeFiles 0
+.PHONY : CMakeFiles/QubeFS.dir/rule
+
+# Convenience name for target.
+QubeFS: CMakeFiles/QubeFS.dir/rule
+.PHONY : QubeFS
+
+# clean rule for target.
+CMakeFiles/QubeFS.dir/clean:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/QubeFS.dir/build.make CMakeFiles/QubeFS.dir/clean
+.PHONY : CMakeFiles/QubeFS.dir/clean
 
 #=============================================================================
 # Target rules for target CMakeFiles/ContinuousConfigure.dir
