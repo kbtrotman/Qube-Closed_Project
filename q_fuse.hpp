@@ -449,11 +449,14 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 
 						// If no collisions, then increment the use count and statistics.
-						qpsql_incr_hash_count(block_hash);
+						int null_recs = qpsql_incr_hash_count(block_hash);
+						if (null_recs != 0) {
+							ERROR("Record count not = 0 in incrementing a hash's use count.");
+						}
 					}
 
 				}
-
+				// Find which hashes were modified and remove/alter as necessary.
 				qfs_compare_existing_hashes( &hash_buffer );
 
 				//Write the results to the file we're modifying...					

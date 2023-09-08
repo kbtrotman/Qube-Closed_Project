@@ -49,6 +49,7 @@ class qube_psql : public qube_log {
                     psql_init = true;
 				}
 			}
+			FLUSH;
 		}
 
 		~qube_psql () { 
@@ -73,6 +74,7 @@ class qube_psql : public qube_log {
 			std::string tmp_quote(escaped_val);
 			PQfreemem(escaped_val);
 			TRACE("QUBE_PSQL::qpsql_get_quoted_value---[Leaving]---with quoted string: {}--->", tmp_quote);
+			FLUSH;
 			return tmp_quote;
 		}
 
@@ -83,13 +85,14 @@ class qube_psql : public qube_log {
         	char *binary_field = reinterpret_cast<char *>(PQunescapeBytea((const unsigned char *)escaped_binary_field, &escaped_binary_field_size));
         	if (!binary_field) {
             	ERROR("QUBE_FUSE::qpsql_get_unquoted_value: Failed to unescape binary data: {}", PQerrorMessage(conn));
-				qpsql_do_exit(7);
+				FLUSH;
 				return "";
 			}else {
 				DEBUG("QUBE_FUSE::qpsql_get_unquoted_value: unescaped string value = {}", binary_field);
 				std::string tmp_field(binary_field);
 				PQfreemem(binary_field);
 				TRACE("QUBE_FUSE::qpsql_get_unquoted_value---[Leaving]---with binary data string: {}--->", tmp_field);
+				FLUSH;
 				return tmp_field;
 			}
 		}
@@ -114,6 +117,7 @@ class qube_psql : public qube_log {
 			}	
 				
 			TRACE("QUBE_FUSE::qpsql_get_block_from_hash: Leaving qpsql_get_block_from_hash with data block: {}", data_block);
+			FLUSH;
 			return data_block;
 		}
 
@@ -128,6 +132,7 @@ class qube_psql : public qube_log {
             std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), quoted_block.c_str(), 1 );
 			std::string tmp_sql(quoted_sql);
 			int res;
+			FLUSH;
 
             DEBUG("QUBE_PSQL::qpsql_insert_hash: INSERT QUERY = {}", tmp_sql);
             last_ins = qpsql_execInsert(tmp_sql);
@@ -141,10 +146,11 @@ class qube_psql : public qube_log {
 			}
 
             TRACE("QUBE_PSQL::qpsql_insert_hash: ---[Leaving]---with rows inserted: {:d}--->", res);
+			FLUSH;
             return res;
         }
 
-		static PGresult* qpsql_incr_hash_count(std::string hash) {
+		static int qpsql_incr_hash_count(std::string hash) {
 			TRACE("QUBE_PSQL::qpsql_incr_hash_count---hash {}--->", hash);
 			PGresult *res;
 			
@@ -153,9 +159,10 @@ class qube_psql : public qube_log {
             std::sprintf(quoted_sql, use_incr, quoted_hash.c_str(), 1 );
 
 			res = qpsql_execQuery(quoted_sql);
-
+			rec_count = 0;
 			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
-			return res;
+			FLUSH;
+			return rec_count;
 		}
 
 		static PGresult* qpsql_decr_hash_count(std::string hash) {
@@ -169,6 +176,7 @@ class qube_psql : public qube_log {
 			res = qpsql_execQuery(quoted_sql);
 
 			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
+			FLUSH;
 			return res;
 		}
 
@@ -186,6 +194,7 @@ class qube_psql : public qube_log {
 			}
 
 			TRACE("QUBE_PSQL::qpsql_execQuery---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
+			FLUSH;
 			return res;
 		}
 
@@ -200,6 +209,7 @@ class qube_psql : public qube_log {
         		ERROR("QUBE_PSQL::qpsql_execInsert: INSERT failed from the SQL Query just posted. SQL Return Error message: {}", PQerrorMessage(conn));
     		}
 			TRACE("QUBE_PSQL::qpsql_execInsert:---[Leaving]--->");
+			FLUSH;
 			return res;
 		}
 
