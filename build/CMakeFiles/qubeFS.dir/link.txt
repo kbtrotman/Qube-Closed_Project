@@ -1,0 +1,1 @@
+/usr/bin/g++ -g -rdynamic CMakeFiles/qubeFS.dir/qube.cpp.o -o qubeFS  -lpq -lcrypto -lfuse3 

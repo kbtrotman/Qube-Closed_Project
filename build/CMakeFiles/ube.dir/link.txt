@@ -1,0 +1,1 @@
+/usr/bin/g++ -g -rdynamic CMakeFiles/ube.dir/qube.cpp.o -o ube 

@@ -1,0 +1,1 @@
+/usr/bin/g++ -g -rdynamic CMakeFiles/qube.dir/qube.cpp.o -o qube 
