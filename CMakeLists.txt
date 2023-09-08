@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(Qube VERSION 0.1.0 LANGUAGES CXX)
+project(QubeFS VERSION 0.1.0 LANGUAGES CXX)
 
 set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -10,19 +10,19 @@ include_directories(.)
 include(CTest)
 enable_testing()
 
-add_executable(qubeFS   qube.cpp
-                        qube.hpp
-                        q_psql.hpp
-                        q_fuse.hpp
-                        q_fs_layer.hpp
+add_executable(${PROJECT_NAME}   qube.cpp
+                                 qube.hpp
+                                 q_psql.hpp
+                                 q_fuse.hpp
+                                 q_fs_layer.hpp
 )
 
-target_include_directories(qubeFS PUBLIC 
+target_include_directories(${PROJECT_NAME} PUBLIC 
    /usr/include/fuse3
    /usr/include/spdlog
 )
 
-target_link_libraries(qubeFS PUBLIC pq crypto fuse3)
+target_link_libraries(${PROJECT_NAME} PUBLIC pq crypto fuse3)
 
 target_compile_options(qubeFS PUBLIC -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors)
 

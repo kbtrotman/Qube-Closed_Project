@@ -147,7 +147,7 @@ CMAKE_PROJECT_DESCRIPTION:STATIC=
 CMAKE_PROJECT_HOMEPAGE_URL:STATIC=
 
 //Value Computed by CMake
-CMAKE_PROJECT_NAME:STATIC=Qube
+CMAKE_PROJECT_NAME:STATIC=QubeFS
 
 //Value Computed by CMake
 CMAKE_PROJECT_VERSION:STATIC=0.1.0
@@ -301,6 +301,12 @@ MEMORYCHECK_COMMAND:FILEPATH=/usr/bin/valgrind
 
 //File that contains suppressions for the memory checker
 MEMORYCHECK_SUPPRESSIONS_FILE:FILEPATH=
+
+//Value Computed by CMake
+QubeFS_BINARY_DIR:STATIC=/home/trotmkeb/c/Qube/build
+
+//Value Computed by CMake
+QubeFS_SOURCE_DIR:STATIC=/home/trotmkeb/c/Qube
 
 //Value Computed by CMake
 Qube_BINARY_DIR:STATIC=/home/trotmkeb/c/Qube/build

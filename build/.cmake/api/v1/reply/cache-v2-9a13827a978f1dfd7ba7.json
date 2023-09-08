@@ -879,7 +879,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "Qube"
+			"value" : "QubeFS"
 		},
 		{
 			"name" : "CMAKE_PROJECT_VERSION",
@@ -1684,6 +1684,30 @@
 			],
 			"type" : "UNINITIALIZED",
 			"value" : ""
+		},
+		{
+			"name" : "QubeFS_BINARY_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/home/trotmkeb/c/Qube/build"
+		},
+		{
+			"name" : "QubeFS_SOURCE_DIR",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Value Computed by CMake"
+				}
+			],
+			"type" : "STATIC",
+			"value" : "/home/trotmkeb/c/Qube"
 		},
 		{
 			"name" : "Qube_BINARY_DIR",
