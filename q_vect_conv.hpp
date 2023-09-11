@@ -19,6 +19,11 @@ class q_convert : public qube_log {
             return tmp_vect.assign(str.begin(), str.end());
 		}
 
+        static std::string vect2string (std::vector<uint8_t> *vec) {
+            std::string str(vec->data());
+            return str;
+		}
+
     private:
 
 };

@@ -437,7 +437,16 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 					DEBUG("QUBE_FUSE::qfs_write: Appended hash: {} to hash_buffer: {}.", block_hash, hash_buffer);
             		//# Check if the hash exists
             		//##########################
-                	if ( qpsql_get_block_from_hash(block_hash) == NO_RECORD_S ) {
+					std::string tmp_str = q_convert::vect2string(qpsql_get_block_from_hash(block_hash));
+
+
+
+
+************************************************
+
+
+
+                	if ( tmp_vec_mem == NO_RECORD_S ) {
 						//hash doesn't exist, save it...
 						int ins_rows = 0;
 						ins_rows = qpsql_insert_hash(block_hash, cur_block);

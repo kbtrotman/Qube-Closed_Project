@@ -36,6 +36,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
+#include <vector>
 
 // Simple Macros
 // & Constants
