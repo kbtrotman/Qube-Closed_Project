@@ -361,7 +361,8 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			int original_size;
 			char tmpbuffer[HASH_SIZE];
 			std::string block_hash;
-			std::string actual_contents;
+			std::vector<uint8_t> tmp_block;
+			std::vector<uint8_t> actual_contents;
 
 			if (num_in_a_partial > 0) { num_of_hashes++; }
 			fd = fi->fh;
@@ -375,7 +376,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 			for (int i=0; i < num_of_hashes; i++) {
 
-				res = pread(fd, tmpbuffer, HASH_SIZE, (offset + (i * HASH_SIZE)) );
+				res = pread(fd, tmpbuffer, HASH_SIZE, offset + (i * HASH_SIZE));
 				if (res == -1) {
 					ERROR("QUBE_FUSE:qfs_read: error reading from provided file handle {:d}.", fd);
 					res = -errno;
@@ -386,17 +387,18 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			
 				std::string read_buffer(tmpbuffer);
 				block_hash = read_buffer.substr((i * HASH_SIZE), ((i + 1) * HASH_SIZE));
-				actual_contents += qpsql_get_block_from_hash(block_hash);
+				tmp_block = qpsql_get_block_from_hash(block_hash);
+				actual_contents.insert(actual_contents.end(), tmp_block.begin(), tmp_block.end());
 			}
 
 			size = original_size;
 			offset = original_offset;
-			DEBUG("QUBE_FUSE:qfs_read: {:d} Bytes of data read to buffer with filehandle {:d}, data is: {}.", actual_contents.length(), fd, actual_contents);
+			DEBUG("QUBE_FUSE:qfs_read: data read to buffer with filehandle {:d}, data is: {}.", fd, actual_contents.data());
 
-			memcpy( buffer, actual_contents.c_str(), actual_contents.length() );
+			memcpy(buffer, actual_contents.data(), actual_contents.size());
 			TRACE("QUBE_FUSE::qfs_read---[Leaving]--->");
 			FLUSH;
-			return actual_contents.length();
+			return actual_contents.size();
 		}
 
 		static int qfs_write( const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *info ) {
@@ -404,8 +406,8 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			double original_offset;
 			std::string block_hash;
 			std::string hash_buffer;
-			std::string cur_block;
 			std::string buffer(buf);
+			std::vector<uint8_t> cur_block;
 			int res;
 
        		if (buffer.empty()) {
@@ -426,9 +428,11 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
         		for (int i=0; i < numBuffers; i++) {
             		DEBUG("QUBE_FUSE::qfs_write: # of Times through hash loop: {:d} ",i);
-					cur_block = buffer.substr(i * BLOCK_SIZE, (i + 1) * BLOCK_SIZE);
-            		block_hash = qube_hash::get_sha512_hash(cur_block);
-            		DEBUG("QUBE_FUSE::qfs_write: Hash that was generated: {}", block_hash);
+
+					cur_block = q_convert::string2vect( &buffer.substr(i * BLOCK_SIZE, (i + 1) * BLOCK_SIZE) );
+					block_hash = qube_hash::get_sha512_hash(cur_block);			
+					
+					DEBUG("QUBE_FUSE::qfs_write: Hash that was generated: {}", block_hash);
             		hash_buffer += block_hash;
 					DEBUG("QUBE_FUSE::qfs_write: Appended hash: {} to hash_buffer: {}.", block_hash, hash_buffer);
             		//# Check if the hash exists

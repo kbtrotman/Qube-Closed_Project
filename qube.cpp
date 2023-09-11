@@ -54,6 +54,7 @@ std::shared_ptr<spdlog::logger> qube_log::_qlog; // initialize static member
 bool qube_log::logger_init = false;
 int qube_log::exStatus = 0;
 
+#include "q_vect_conv.hpp"
 #include "q_psql.hpp"
 
 class qube_hash : public qube_psql {
@@ -65,8 +66,8 @@ class qube_hash : public qube_psql {
 			FLUSH;
 		}
 
-		static std::string get_sha512_hash(const std::string str){
-			TRACE("qube_hash::get_sha512_hash---[{}]--->", str);
+		static std::string get_sha512_hash(const std::vector<uint8_t> v_str){
+			TRACE("qube_hash::get_sha512_hash---[{}]--->", v_str);
 			
 			// We have static sections, so let's blank everything to be safe here.
 			std::memset(hash, 0, SHA512_DIGEST_LENGTH);
@@ -75,7 +76,7 @@ class qube_hash : public qube_psql {
 
   			SHA512_CTX sha512;
   			SHA512_Init(&sha512);
-  			SHA512_Update(&sha512, str.c_str(), str.size());
+  			SHA512_Update(&sha512, v_str.data(), v_str.size());
   			SHA512_Final(hash, &sha512);
 
 			for(int i = 0; i < (SHA512_DIGEST_LENGTH); i++){

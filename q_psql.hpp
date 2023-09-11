@@ -97,11 +97,11 @@ class qube_psql : public qube_log {
 			}
 		}
 
-		static std::string qpsql_get_block_from_hash(std::string hash) {
+		static std::vector<uint8_t> qpsql_get_block_from_hash(std::string hash) {
             //SELECT a data block from the DB given a hash value....
             TRACE("QUBE_FUSE::qpsql_get_block_from_hash---hash: {}--->", hash);
-			std::string data_block;
-			
+			std::vector<uint8_t> data_block;
+
             quoted_hash = qpsql_get_quoted_value(hash);
 			char *quoted_sql = (char *) malloc(strlen(qu_sql) + quoted_hash.length() + 1);
     		std::sprintf(quoted_sql, qu_sql, quoted_hash.c_str());
@@ -110,18 +110,18 @@ class qube_psql : public qube_log {
             last_res = qpsql_execQuery(quoted_sql);
 			if (rec_count == 0) {
 				_qlog->warn("QUBE_FUSE::qpsql_get_block_from_hash: No records returned for hash.");
-				data_block = NO_RECORD_S;
+				data_block.assign(NO_RECORD_S, sizeof(NO_RECORD_S));
 			} else {
-				data_block = qpsql_get_unquoted_value(PQgetvalue(last_res, 0, 0));
+				std::string tmp_string = qpsql_get_unquoted_value(PQgetvalue(last_res, 0, 0));
+				data_block.assign(tmp_string.begin(), tmp_string.end());
 				DEBUG("QUBE_FUSE::qpsql_get_block_from_hash: Data block returned from DB. query = {} returned block = {}", quoted_sql, data_block); 
-			}	
-				
-			TRACE("QUBE_FUSE::qpsql_get_block_from_hash: Leaving qpsql_get_block_from_hash with data block: {}", data_block);
+			}
+			TRACE("QUBE_FUSE::qpsql_get_block_from_hash: Leaving qpsql_get_block_from_hash with data block: {}", data_block);	
 			FLUSH;
 			return data_block;
 		}
 
-        static int qpsql_insert_hash(std::string hash, std::string data_block) {
+        static int qpsql_insert_hash(std::string hash, std::vector<uint8_t> data_block) {
             //INSERT a hash into the DB....
             TRACE("QUBE_PSQL::qpsql_insert_hash---hash: {}---block: {}--->", hash, data_block);
 

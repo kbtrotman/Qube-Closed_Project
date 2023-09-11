@@ -76,7 +76,7 @@
 #define HOST "10.100.122.20"
 #define PORT "5432"
 
-#define NO_RECORD_S "NO_DB_RECORDS_RETURNED"
+#define NO_RECORD_S 0x099
 
 #define DBSTRING "user=" USER " dbname=" DATABASE " password=" PASSWORD " hostaddr=" HOST " port=" PORT
 
