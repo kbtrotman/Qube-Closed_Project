@@ -393,7 +393,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
 			size = original_size;
 			offset = original_offset;
-			DEBUG("QUBE_FUSE:qfs_read: data read to buffer with filehandle {:d}, data is: {}.", fd, actual_contents.data());
+			DEBUG("QUBE_FUSE:qfs_read: data read to buffer with filehandle {:d}, data is: {}.", fd, (char*)actual_contents.data());
 
 			memcpy(buffer, actual_contents.data(), actual_contents.size());
 			TRACE("QUBE_FUSE::qfs_read---[Leaving]--->");
@@ -428,8 +428,10 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 
         		for (int i=0; i < numBuffers; i++) {
             		DEBUG("QUBE_FUSE::qfs_write: # of Times through hash loop: {:d} ",i);
-
-					cur_block = q_convert::string2vect( &buffer.substr(i * BLOCK_SIZE, (i + 1) * BLOCK_SIZE) );
+					{
+					std::string tmp_block = buffer.substr(i * BLOCK_SIZE, (i + 1) * BLOCK_SIZE);
+					cur_block = q_convert::string2vect(&tmp_block);
+					}
 					block_hash = qube_hash::get_sha512_hash(cur_block);			
 					
 					DEBUG("QUBE_FUSE::qfs_write: Hash that was generated: {}", block_hash);
@@ -437,28 +439,32 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 					DEBUG("QUBE_FUSE::qfs_write: Appended hash: {} to hash_buffer: {}.", block_hash, hash_buffer);
             		//# Check if the hash exists
             		//##########################
-					std::string tmp_str = q_convert::vect2string(qpsql_get_block_from_hash(block_hash));
 
+					std::vector<uint8_t> block_in_DB(qpsql_get_block_from_hash(block_hash));
 
-
-
-************************************************
-
-
-
-                	if ( tmp_vec_mem == NO_RECORD_S ) {
+                	if ( qube_psql::rec_count < 0 ) {
 						//hash doesn't exist, save it...
 						int ins_rows = 0;
-						ins_rows = qpsql_insert_hash(block_hash, cur_block);
-						DEBUG("QUBE_FUSE::qfs_write: Saved to DB: hash: {} Block: {} in {:d} rows.", block_hash, cur_block, ins_rows);
+						ins_rows = qpsql_insert_hash(block_hash, &cur_block);
+						DEBUG("QUBE_FUSE::qfs_write: Saved to DB: hash: {} Block: {} in {:d} rows.", block_hash, (char*)cur_block.data(), ins_rows);
 						if ( ins_rows < 1 ) {ERROR("QUBE_FUSE::qfs_write: data was not saved to the DB, rows = {:d}}!", ins_rows);}
 					} else {
 						// Handle Collisions:
 						// Hash does exist, check if the data block in the DB is the same...
-						// if (! (cur_block == ) ) {
+						if ( ! (cur_block == block_in_DB) ) {
 							// Then we have a hard collision. Let's deal with it.
+							ERROR("QUBE_FUSE::qfs_write: Hash Colission! Hard Error. Saving data and working around the problem.");
 
-						// }
+							//TODO: We don't allow collisions in this FS, so we deal with the error in a way that makes sense.
+
+
+							//***********************************************************************************************
+							// Most de-dupe platforms realize that a collision is less likely than filesystem corruption, but
+							// we want to at the least, log the event and note it. Also, we want to save the file in a way its
+							// recoverable. There are several ways we can do this. But its not important at this moment.
+							//***********************************************************************************************
+							
+						}
 
 
 						// If no collisions, then increment the use count and statistics.

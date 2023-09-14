@@ -333,6 +333,7 @@ CMakeFiles/QubeFS.dir/qube.cpp.o
  /usr/local/include/spdlog/fmt/bundled/chrono.h
  /usr/local/include/spdlog/sinks/base_sink.h
  /usr/local/include/spdlog/sinks/base_sink-inl.h
+ /usr/local/include/spdlog/fmt/bin_to_hex.h
  /usr/include/openssl/sha.h
  /usr/include/openssl/e_os2.h
  /usr/include/openssl/opensslconf.h
@@ -347,6 +348,7 @@ CMakeFiles/QubeFS.dir/qube.cpp.o
  /usr/include/c++/8/bits/sstream.tcc
  /usr/include/c++/8/iomanip
  /usr/include/c++/8/bits/quoted_string.h
+ /home/trotmkeb/c/Qube/q_convert.hpp
  /home/trotmkeb/c/Qube/q_psql.hpp
  /usr/include/libpq-fe.h
  /usr/include/postgres_ext.h

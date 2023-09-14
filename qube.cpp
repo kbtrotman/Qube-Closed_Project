@@ -10,6 +10,9 @@
 // For Logging!
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/daily_file_sink.h"
+#include "spdlog/fmt/fmt.h"
+#include "spdlog/fmt/bin_to_hex.h"
+
 // Dedupe & crypto algorythms
 #include <openssl/sha.h>
 
@@ -54,7 +57,7 @@ std::shared_ptr<spdlog::logger> qube_log::_qlog; // initialize static member
 bool qube_log::logger_init = false;
 int qube_log::exStatus = 0;
 
-#include "q_vect_conv.hpp"
+#include "q_convert.hpp"
 #include "q_psql.hpp"
 
 class qube_hash : public qube_psql {
@@ -67,7 +70,7 @@ class qube_hash : public qube_psql {
 		}
 
 		static std::string get_sha512_hash(const std::vector<uint8_t> v_str){
-			TRACE("qube_hash::get_sha512_hash---[{}]--->", v_str);
+			TRACE("qube_hash::get_sha512_hash---[{}]--->", (char*)v_str.data());
 			
 			// We have static sections, so let's blank everything to be safe here.
 			std::memset(hash, 0, SHA512_DIGEST_LENGTH);

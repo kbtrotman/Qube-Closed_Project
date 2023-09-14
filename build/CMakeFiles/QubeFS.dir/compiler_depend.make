@@ -332,6 +332,7 @@ CMakeFiles/QubeFS.dir/qube.cpp.o: ../qube.cpp \
   /usr/local/include/spdlog/fmt/bundled/chrono.h \
   /usr/local/include/spdlog/sinks/base_sink.h \
   /usr/local/include/spdlog/sinks/base_sink-inl.h \
+  /usr/local/include/spdlog/fmt/bin_to_hex.h \
   /usr/include/openssl/sha.h \
   /usr/include/openssl/e_os2.h \
   /usr/include/openssl/opensslconf.h \
@@ -346,6 +347,7 @@ CMakeFiles/QubeFS.dir/qube.cpp.o: ../qube.cpp \
   /usr/include/c++/8/bits/sstream.tcc \
   /usr/include/c++/8/iomanip \
   /usr/include/c++/8/bits/quoted_string.h \
+  ../q_convert.hpp \
   ../q_psql.hpp \
   /usr/include/libpq-fe.h \
   /usr/include/postgres_ext.h \
@@ -387,6 +389,8 @@ CMakeFiles/QubeFS.dir/qube.cpp.o: ../qube.cpp \
 /usr/include/c++/8/bits/quoted_string.h:
 
 /usr/include/c++/8/iostream:
+
+/usr/include/dirent.h:
 
 /usr/include/c++/8/bits/functional_hash.h:
 
@@ -708,6 +712,8 @@ CMakeFiles/QubeFS.dir/qube.cpp.o: ../qube.cpp \
 
 /usr/include/c++/8/bits/stl_iterator_base_funcs.h:
 
+../q_convert.hpp:
+
 /usr/include/sys/cdefs.h:
 
 /usr/include/linux/falloc.h:
@@ -769,6 +775,8 @@ CMakeFiles/QubeFS.dir/qube.cpp.o: ../qube.cpp \
 ../q_fuse.hpp:
 
 /usr/include/c++/8/cstdarg:
+
+/usr/local/include/spdlog/fmt/bin_to_hex.h:
 
 /usr/include/bits/types/timer_t.h:
 
@@ -1077,5 +1085,3 @@ CMakeFiles/QubeFS.dir/qube.cpp.o: ../qube.cpp \
 /usr/include/openssl/opensslv.h:
 
 ../qube.hpp:
-
-/usr/include/dirent.h:
