@@ -80,6 +80,7 @@ class qube_psql : public qube_log {
 
 		static std::string qpsql_get_quoted_value(std::vector<uint8_t> *in_vec) {
     		TRACE("QUBE_FUSE::qpsql_get_unquoted_value---binary instr: {}--->", (char*)in_vec->data());
+			FLUSH;
 			char *escaped_val = PQescapeLiteral(conn, ((const char*)q_convert::vect2char(in_vec)), in_vec->size());
 
      		if (escaped_val == NULL) {
