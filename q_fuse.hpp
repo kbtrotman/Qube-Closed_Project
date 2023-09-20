@@ -406,32 +406,30 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 			double original_offset;
 			std::string block_hash;
 			std::string hash_buffer;
-			std::string buffer(buf);
 			std::vector<uint8_t> cur_block;
 			int res;
 
-       		if (buffer.empty()) {
-            	DEBUG("QUBE_FUSE::qfs_write: Exiting qfs_write with no data to write to disk/DB: '{:d}'.", buffer.length());
-            	res = 0;
-			} else {
-            	DEBUG("QUBE_FUSE::qfs_Write: Incoming full path: {}---buffer: {}--- and buffer length: {}--->", last_full_path, buffer, buffer.length());
-				original_offset = offset;
+			FLUSH;
 
+			if ( *buf == '\0' ) {
+				DEBUG("QUBE_FUSE::qfs_write: Exiting qfs_write with no data to write to disk/DB: '{:d}'.", buf);
+				res = 0;
+			} else {
+            	DEBUG("QUBE_FUSE::qfs_Write: Incoming full path: {}---buffer: {}--- and buffer length: {}--->", last_full_path, buf, sizeof(buf));
+				original_offset = offset;
+				FLUSH;
         		//# Generate the test hashes
         		//###########################
         		offset = (offset * HASH_SIZE) / BLOCK_SIZE;
-				int fracBuffers = buffer.length() % BLOCK_SIZE; //Most algs use ceiling, but Ceiling ignores very small fractions.
-				int numBuffers = buffer.length() / BLOCK_SIZE;	 								          
+				int fracBuffers = sizeof(buf) % BLOCK_SIZE; //Most algs use ceiling, but Ceiling ignores very small fractions.
+				int numBuffers = sizeof(buf) / BLOCK_SIZE;	 								          
 																   
 				if (fracBuffers > 0) {numBuffers++;}             // If we have extra data, then we need to add a buffer frame to store it.
 				DEBUG("QUBE_FUSE::qfs_write: There are {:d} buffers in the data stream, including {:d} bytes in a fractional buffer.", numBuffers, fracBuffers);
 
         		for (int i=0; i < numBuffers; i++) {
             		DEBUG("QUBE_FUSE::qfs_write: # of Times through hash loop: {:d} ",i);
-					{
-					std::string tmp_block = buffer.substr(i * BLOCK_SIZE, (i + 1) * BLOCK_SIZE);
-					cur_block = q_convert::string2vect(&tmp_block);
-					}
+					cur_block = q_convert::substr_of_char(buf, i * BLOCK_SIZE, (i + 1) * BLOCK_SIZE);
 					block_hash = qube_hash::get_sha512_hash(cur_block);			
 					
 					DEBUG("QUBE_FUSE::qfs_write: Hash that was generated: {}", block_hash);
@@ -441,23 +439,20 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
             		//##########################
 
 					std::vector<uint8_t> block_in_DB(qpsql_get_block_from_hash(block_hash));
-
-                	if ( qube_psql::rec_count < 0 ) {
+					FLUSH;
+                	if ( qube_psql::rec_count == 0 ) {
 						//hash doesn't exist, save it...
 						int ins_rows = 0;
 						ins_rows = qpsql_insert_hash(block_hash, &cur_block);
 						DEBUG("QUBE_FUSE::qfs_write: Saved to DB: hash: {} Block: {} in {:d} rows.", block_hash, (char*)cur_block.data(), ins_rows);
 						if ( ins_rows < 1 ) {ERROR("QUBE_FUSE::qfs_write: data was not saved to the DB, rows = {:d}}!", ins_rows);}
 					} else {
-						// Handle Collisions:
-						// Hash does exist, check if the data block in the DB is the same...
+						// Handle Collisions: Hash does exist, check if the data block in the DB is the same...
 						if ( ! (cur_block == block_in_DB) ) {
 							// Then we have a hard collision. Let's deal with it.
 							ERROR("QUBE_FUSE::qfs_write: Hash Colission! Hard Error. Saving data and working around the problem.");
 
 							//TODO: We don't allow collisions in this FS, so we deal with the error in a way that makes sense.
-
-
 							//***********************************************************************************************
 							// Most de-dupe platforms realize that a collision is less likely than filesystem corruption, but
 							// we want to at the least, log the event and note it. Also, we want to save the file in a way its
@@ -465,7 +460,6 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 							//***********************************************************************************************
 							
 						}
-
 
 						// If no collisions, then increment the use count and statistics.
 						int null_recs = qpsql_incr_hash_count(block_hash);
@@ -482,7 +476,7 @@ class qube_fuse : public fuse_operations, public qube_hash, public qube_FS {
 				DEBUG("QUBE_FUSE::qfs_write: End Hash Buffer: {}", hash_buffer);
 				res = qfs_write_to_file( info->fh, hash_buffer.c_str(), hash_buffer.length(), offset );
 				DEBUG("QUBE_FUSE::qfs_write: {} Bytes of data Written from buffer of length {} to qubeFS filename {} and filehandle {}.",
-					res, buffer.length(), path, info->fh);
+					res, sizeof(buf), path, info->fh);
 			}
 			offset = original_offset;
 			TRACE("QUBE_FUSE::qfs_write---[Leaving]--->");

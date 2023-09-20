@@ -51,6 +51,16 @@ class q_convert : public qube_log {
             return std::string(reinterpret_cast<const char*>(vec.data()), vec.size());
         }
 
+        static std::vector<uint8_t> substr_of_char(const char *str, int start, int end) {
+            // Create a new vector as a substring of the original vector
+            std::vector<uint8_t> substringVector;
+
+            for (int i = 0; i < (end - start); ++i) {
+                substringVector.push_back( str[i] );
+            }
+            return substringVector;
+        }
+
 /*
         static int vect_is_errorcode(std::vector<uint8_t> vec) {
             int isErrorCode = 0;
