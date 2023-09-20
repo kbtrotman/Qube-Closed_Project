@@ -21,7 +21,7 @@
 			{
 				"command" : 1,
 				"file" : 2,
-				"line" : 10,
+				"line" : 8,
 				"parent" : 0
 			},
 			{
@@ -41,7 +41,7 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 75,
+				"line" : 59,
 				"parent" : 4
 			}
 		]
@@ -50,8 +50,8 @@
 	{
 		"name" : "CTestDashboardTargets"
 	},
-	"id" : "NightlyTest::@6890427a1f51a3e7e1df",
-	"name" : "NightlyTest",
+	"id" : "Nightly::@6890427a1f51a3e7e1df",
+	"name" : "Nightly",
 	"paths" : 
 	{
 		"build" : ".",
@@ -79,13 +79,13 @@
 		{
 			"backtrace" : 5,
 			"isGenerated" : true,
-			"path" : "build/CMakeFiles/NightlyTest",
+			"path" : "build/CMakeFiles/Nightly",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 0,
 			"isGenerated" : true,
-			"path" : "build/CMakeFiles/NightlyTest.rule",
+			"path" : "build/CMakeFiles/Nightly.rule",
 			"sourceGroupIndex" : 1
 		}
 	],

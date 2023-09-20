@@ -5,8 +5,6 @@ set(CMAKE_C_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_REQUIRED_LIBRARIES "pq" "crypto" "fuse3")
 
-include_directories(.)
-
 include(CTest)
 enable_testing()
 
@@ -15,11 +13,15 @@ add_executable(${PROJECT_NAME}   qube.cpp
                                  q_psql.hpp
                                  q_fuse.hpp
                                  q_fs_layer.hpp
+                                 q_convert.hpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC 
+   /home/trotmkeb/c/Qube/
+   /usr/include 
    /usr/include/fuse3
    /usr/include/spdlog
+   /usr/include/pq
 )
 
 target_link_libraries(${PROJECT_NAME} PUBLIC pq crypto fuse3)

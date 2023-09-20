@@ -94,7 +94,7 @@ build cmake_object_order_depends_target_QubeFS: phony || CMakeFiles/QubeFS.dir
 build CMakeFiles/QubeFS.dir/qube.cpp.o: CXX_COMPILER__QubeFS_Debug ../qube.cpp || cmake_object_order_depends_target_QubeFS
   DEP_FILE = CMakeFiles/QubeFS.dir/qube.cpp.o.d
   FLAGS = -g -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors
-  INCLUDES = -I../. -I/usr/include/fuse3 -I/usr/include/spdlog
+  INCLUDES = -I../ -I/usr/include/fuse3 -I/usr/include/spdlog -I/usr/include/pq
   OBJECT_DIR = CMakeFiles/QubeFS.dir
   OBJECT_FILE_DIR = CMakeFiles/QubeFS.dir
 

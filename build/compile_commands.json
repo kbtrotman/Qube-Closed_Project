@@ -1,7 +1,7 @@
 [
 {
   "directory": "/home/trotmkeb/c/Qube/build",
-  "command": "/usr/bin/g++ -I../. -I/usr/include/fuse3 -I/usr/include/spdlog -g -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors -o CMakeFiles/QubeFS.dir/qube.cpp.o -c /home/trotmkeb/c/Qube/qube.cpp",
+  "command": "/usr/bin/g++ -I../ -I/usr/include/fuse3 -I/usr/include/spdlog -I/usr/include/pq -g -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors -o CMakeFiles/QubeFS.dir/qube.cpp.o -c /home/trotmkeb/c/Qube/qube.cpp",
   "file": "/home/trotmkeb/c/Qube/qube.cpp"
 }
 ]

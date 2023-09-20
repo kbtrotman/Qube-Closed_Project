@@ -13,7 +13,6 @@
 			"add_executable",
 			"target_link_libraries",
 			"target_compile_options",
-			"include_directories",
 			"target_include_directories"
 		],
 		"files" : 
@@ -28,31 +27,25 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 13,
+				"line" : 11,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 25,
+				"line" : 27,
 				"parent" : 0
 			},
 			{
 				"command" : 2,
 				"file" : 0,
-				"line" : 27,
+				"line" : 29,
 				"parent" : 0
 			},
 			{
 				"command" : 3,
 				"file" : 0,
-				"line" : 8,
-				"parent" : 0
-			},
-			{
-				"command" : 4,
-				"file" : 0,
-				"line" : 20,
+				"line" : 19,
 				"parent" : 0
 			}
 		]
@@ -82,15 +75,19 @@
 			[
 				{
 					"backtrace" : 4,
-					"path" : "/home/trotmkeb/c/Qube/."
+					"path" : "/home/trotmkeb/c/Qube"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 4,
 					"path" : "/usr/include/fuse3"
 				},
 				{
-					"backtrace" : 5,
+					"backtrace" : 4,
 					"path" : "/usr/include/spdlog"
+				},
+				{
+					"backtrace" : 4,
+					"path" : "/usr/include/pq"
 				}
 			],
 			"language" : "CXX",
@@ -154,7 +151,8 @@
 				1,
 				2,
 				3,
-				4
+				4,
+				5
 			]
 		}
 	],
@@ -184,6 +182,11 @@
 		{
 			"backtrace" : 1,
 			"path" : "q_fs_layer.hpp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 1,
+			"path" : "q_convert.hpp",
 			"sourceGroupIndex" : 1
 		}
 	],

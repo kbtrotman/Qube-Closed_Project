@@ -21,7 +21,7 @@
 			{
 				"command" : 1,
 				"file" : 2,
-				"line" : 10,
+				"line" : 8,
 				"parent" : 0
 			},
 			{
@@ -50,8 +50,8 @@
 	{
 		"name" : "CTestDashboardTargets"
 	},
-	"id" : "NightlyUpdate::@6890427a1f51a3e7e1df",
-	"name" : "NightlyUpdate",
+	"id" : "ContinuousBuild::@6890427a1f51a3e7e1df",
+	"name" : "ContinuousBuild",
 	"paths" : 
 	{
 		"build" : ".",
@@ -79,13 +79,13 @@
 		{
 			"backtrace" : 5,
 			"isGenerated" : true,
-			"path" : "build/CMakeFiles/NightlyUpdate",
+			"path" : "build/CMakeFiles/ContinuousBuild",
 			"sourceGroupIndex" : 0
 		},
 		{
 			"backtrace" : 0,
 			"isGenerated" : true,
-			"path" : "build/CMakeFiles/NightlyUpdate.rule",
+			"path" : "build/CMakeFiles/ContinuousBuild.rule",
 			"sourceGroupIndex" : 1
 		}
 	],
