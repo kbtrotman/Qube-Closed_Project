@@ -1,13 +1,5 @@
 # ninja log v5
-0	11002	1695645177	CMakeFiles/QubeFS.dir/qube.cpp.o	38fa78fcc38c9dc7
-2	12271	1695645178	CMakeFiles/QubeFS.dir/q_dedupe.cpp.o	e2ac1b7116883ade
-2	13417	1695645180	CMakeFiles/QubeFS.dir/q_fuse.cpp.o	b5e67c65203eb08f
-2	11886	1695645400	CMakeFiles/QubeFS.dir/q_fuse.cpp.o	b5e67c65203eb08f
-4	13197	1695645402	CMakeFiles/QubeFS.dir/q_dedupe.cpp.o	e2ac1b7116883ade
-1	13689	1695645402	CMakeFiles/QubeFS.dir/qube.cpp.o	38fa78fcc38c9dc7
-4	11398	1695645493	CMakeFiles/QubeFS.dir/q_dedupe.cpp.o	e2ac1b7116883ade
-1	12286	1695645494	CMakeFiles/QubeFS.dir/qube.cpp.o	38fa78fcc38c9dc7
-2	14220	1695645496	CMakeFiles/QubeFS.dir/q_fuse.cpp.o	b5e67c65203eb08f
-1	7926	1695646275	CMakeFiles/QubeFS.dir/qube.cpp.o	38fa78fcc38c9dc7
-1	7870	1695646418	CMakeFiles/QubeFS.dir/qube.cpp.o	38fa78fcc38c9dc7
-7870	8495	1695646419	QubeFS	ba358c5520f6e7b2
+1	12235	1695661986	CMakeFiles/QubeFS.dir/q_fuse.cpp.o	b5e67c65203eb08f
+2	13026	1695661987	CMakeFiles/QubeFS.dir/q_dedupe.cpp.o	e2ac1b7116883ade
+0	13645	1695661988	CMakeFiles/QubeFS.dir/qube.cpp.o	38fa78fcc38c9dc7
+13645	14292	1695661988	QubeFS	ba358c5520f6e7b2

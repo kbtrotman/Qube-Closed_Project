@@ -1,1 +1,0 @@
-/usr/bin/c++ -rdynamic CMakeFiles/QubeFS.dir/qube.cpp.o CMakeFiles/QubeFS.dir/q_fuse.cpp.o CMakeFiles/QubeFS.dir/q_dedupe.cpp.o -o QubeFS  -lpq -lcrypto -lfuse3 

@@ -35,12 +35,7 @@ const char *qube_psql::use_decr = "";
 unsigned char q_dedupe::hash[SHA512_DIGEST_LENGTH] = {};
 std::stringstream q_dedupe::ss=std::stringstream{};
 
-struct fuse_args qube_fuse::args = {};
-struct qfs_state* qube_fuse::qfs_data = {};
-struct fuse_operations qube_fuse::qfs_operations_ = {};
-fuse_fill_dir_flags qube_fuse::fill_dir_plus = {};
-std::string root_dir = "";
-char* qube_fuse::last_full_path = NULL;
+
 
 // Main entry
 int main( int argc, char *argv[] )

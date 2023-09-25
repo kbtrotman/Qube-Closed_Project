@@ -10,6 +10,13 @@
 
 #include "q_fuse.hpp"
 
+struct fuse_args qube_fuse::args = {};
+struct qfs_state* qube_fuse::qfs_data = {};
+struct fuse_operations qube_fuse::qfs_operations_ = {};
+fuse_fill_dir_flags qube_fuse::fill_dir_plus = {};
+std::string root_dir = "";
+char* qube_fuse::last_full_path = NULL;
+
 
     void qube_fuse::print_usage() {
         std::cout << "usage: ./" << settings.progname << " [FUSE and mount options] <devicesourcepath> <mountPoint>";
