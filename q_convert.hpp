@@ -7,12 +7,16 @@
  *
  */
 
-class q_convert : public qube_log {
+#pragma once
+
+#include "q_log.hpp"
+
+class q_convert {
 
 	public:
 
 
-		q_convert () { 
+		q_convert () {
         }
 
         static std::string char2string (char *str) {

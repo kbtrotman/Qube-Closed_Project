@@ -12,8 +12,11 @@ add_executable(${PROJECT_NAME}   qube.cpp
                                  qube.hpp
                                  q_psql.hpp
                                  q_fuse.hpp
+                                 q_fuse.cpp
                                  q_fs_layer.hpp
                                  q_convert.hpp
+                                 q_dedupe.hpp
+                                 q_dedupe.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC 

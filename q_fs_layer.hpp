@@ -9,18 +9,22 @@
 
 //Low-Level functions directly to FS.
 
+#pragma once
+
+#include "qube.hpp"
+#include "q_log.hpp"
+
 struct qfs_state{
     char *devicepath;
 };
 
 #define QFS_DATA ((struct qfs_state *) fuse_get_context()->private_data)
 
-class qube_FS : public qube_log {
+class qube_FS {
 
 	public:
 
      	qube_FS() {
-
         }
 
         // All globally static methods below this point. They are interrupt-driven......

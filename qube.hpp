@@ -7,7 +7,8 @@
  *
  */
 
-#define FUSE_USE_VERSION 31
+
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -45,14 +46,6 @@
 #define HASH_SIZE 128   // The hexidecimal hash size is twice as long as the 64-char key (512-bit key).
 
 #define NO_HASH_S "NO_ENC_HASHES_RETURNED"
-
-#define TRACE _qlog->trace
-#define DEBUG _qlog->debug
-#define INFO _qlog->info
-#define WARN _qlog->warn
-#define ERROR _qlog->error
-#define CRITICAL _qlog->critical
-#define FLUSH _qlog->flush()
 
 #define PRINT_CONN_STRING(s) \
     ([](const auto& s){ \

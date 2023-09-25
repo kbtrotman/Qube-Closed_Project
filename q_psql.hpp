@@ -7,29 +7,25 @@
  *
  */
 
-// Postgres Support via Postgres/C lib. Libpqxx seems to be trash, no worky worky.
-#include <libpq-fe.h>
-#include <fmt/format.h>
+// Postgres Support via Postgres/C lib. Libpqxx seems to not work. I tried it with no joy.
 
-class qube_psql : public qube_log {
+#pragma once
+
+#include <libpq-fe.h>
+
+#include "qube.hpp"
+#include "q_convert.hpp"
+
+class qube_psql : public q_convert {
 
 	public:
 
-		int		q_psql_vers;
-    	static PGconn     *conn;
+
     	static PGresult   *last_res;
         static PGresult   *last_ins;
     	static int        rec_count;
     	static int        row;
     	static int        col;
-		static bool 	  psql_init;
-		static std::string quoted_hash;
-		static std::string quoted_block;
-		static std::string quoted_count;
-		static const char *qu_sql;
-        static const char *ins_sql;
-		static const char *use_incr;
-		static const char *use_decr;
 
 		qube_psql () {
 			TRACE("Psql Init------>");
@@ -50,6 +46,7 @@ class qube_psql : public qube_log {
                     psql_init = true;
 				}
 			}
+			TRACE("Psql Init Leaving------>");
 			FLUSH;
 		}
 
@@ -64,6 +61,143 @@ class qube_psql : public qube_log {
 		}
 
 		// All globally static methods below this point. They are interrupt-driven......		
+
+		static std::vector<uint8_t> qpsql_get_block_from_hash(std::string hash) {
+            //SELECT a data block from the DB given a hash value....
+            TRACE("QUBE_FUSE::qpsql_get_block_from_hash---hash: {}--->", hash);
+			std::vector<uint8_t> data_block;
+
+            quoted_hash = qpsql_get_quoted_value(hash);
+			char *quoted_sql = (char *) malloc(strlen(qu_sql) + quoted_hash.length() + 1);
+    		std::sprintf(quoted_sql, qu_sql, quoted_hash.c_str());
+ 
+            DEBUG("QUBE_FUSE::qpsql_get_block_from_hash: SELECT QUERY = {}", quoted_sql);
+            last_res = qpsql_execQuery(quoted_sql);
+			if (rec_count == 0) {
+				WARN("QUBE_FUSE::qpsql_get_block_from_hash: No records returned for hash.");
+				data_block.assign(NO_RECORDS, sizeof(NO_RECORDS));
+			} else {
+				std::string tmp_string = qpsql_get_unquoted_value(PQgetvalue(last_res, 0, 0));
+				data_block.assign(tmp_string.begin(), tmp_string.end());
+				DEBUG("QUBE_FUSE::qpsql_get_block_from_hash: Data block returned from DB. query = {} returned block = {}", quoted_sql, (char*)data_block.data()); 
+			}
+			TRACE("QUBE_FUSE::qpsql_get_block_from_hash: Leaving qpsql_get_block_from_hash with data block: {}", (char*)data_block.data());	
+			FLUSH;
+			return data_block;
+		}
+
+        static int qpsql_insert_hash(std::string hash, std::vector<uint8_t> *data_block) {
+            //INSERT a hash into the DB....
+            TRACE("QUBE_PSQL::qpsql_insert_hash---hash: {}---block: {}--->", hash, (char*)data_block->data());
+
+            quoted_hash = qpsql_get_quoted_value(hash);
+            quoted_block = qpsql_get_quoted_value(data_block);
+			//quoted_count = qpsql_get_quoted_value("1");
+            char *quoted_sql = (char *) malloc(strlen(ins_sql) + quoted_hash.length() + quoted_block.length() + quoted_count.length() + 1);
+            std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), quoted_block.c_str(), 1 );
+			std::string tmp_sql(quoted_sql);
+			int res;
+			FLUSH;
+
+            DEBUG("QUBE_PSQL::qpsql_insert_hash: INSERT QUERY = {}", tmp_sql);
+            last_ins = qpsql_execInsert(tmp_sql);
+			if (PQresultStatus(last_ins) != PGRES_COMMAND_OK) {
+				res = 0;
+				CRITICAL("QUBE_PSQL::qpsql_insert_hash: Data insert failed into DB. query = {}", tmp_sql);
+			} else {
+				char *tuples = PQcmdTuples(last_ins);
+				res = atoi(tuples);
+				DEBUG("QUBE_PSQL::qpsql_insert_hash: {:d} rows inserted into DB. query = {}", res, tmp_sql);
+			}
+
+            TRACE("QUBE_PSQL::qpsql_insert_hash: ---[Leaving]---with rows inserted: {:d}--->", res);
+			FLUSH;
+            return res;
+        }
+
+		static int qpsql_incr_hash_count(std::string hash) {
+			TRACE("QUBE_PSQL::qpsql_incr_hash_count---hash {}--->", hash);
+			//PGresult *res;
+			
+			quoted_hash = qpsql_get_quoted_value(hash);
+			char *quoted_sql = (char *) malloc(strlen(use_incr) + quoted_hash.length() + 1);
+            std::sprintf(quoted_sql, use_incr, quoted_hash.c_str(), 1 );
+
+			qpsql_execQuery(quoted_sql);
+			rec_count = 0;
+			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
+			FLUSH;
+			return rec_count;
+		}
+
+		static PGresult* qpsql_decr_hash_count(std::string hash) {
+			TRACE("QUBE_PSQL::qpsql_decr_hash_count---hash {}--->", hash);
+			PGresult *res;
+			
+			quoted_hash = qpsql_get_quoted_value(hash);
+			char *quoted_sql = (char *) malloc(strlen(use_decr) + quoted_hash.length() + 1);
+            std::sprintf(quoted_sql, use_decr, quoted_hash.c_str(), 1 );
+
+			res = qpsql_execQuery(quoted_sql);
+
+			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
+			FLUSH;
+			return res;
+		}
+
+		static PGresult* qpsql_execInsert(std::string qube_query) {
+			/* Create SQL statement */
+			TRACE("QUBE_PSQL::qpsql_execInsert---qube_query {}--->", qube_query);
+			DEBUG(qube_query);
+			PGresult *res;
+
+    		res = PQexec(conn, qube_query.c_str());
+    		if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+        		ERROR("QUBE_PSQL::qpsql_execInsert: INSERT failed from the SQL Query just posted. SQL Return Error message: {}", PQerrorMessage(conn));
+    		}
+			TRACE("QUBE_PSQL::qpsql_execInsert:---[Leaving]--->");
+			FLUSH;
+			return res;
+		}
+
+		static void qpsql_release_query () { PQclear(last_res); PQclear(last_ins); }
+
+		static void qpsql_do_exit(int ex) {
+            //exStatus = ex;
+			//DEBUG("do_exit---[{:d}]--->", exStatus );
+		}
+
+
+	private:
+		int		q_psql_vers;
+    	static PGconn     *conn;
+		static bool 	  psql_init;
+		static std::string quoted_hash;
+		static std::string quoted_block;
+		static std::string quoted_count;
+		static const char *qu_sql;
+        static const char *ins_sql;
+		static const char *use_incr;
+		static const char *use_decr;
+
+		static PGresult* qpsql_execQuery(std::string qube_query) {
+			/* Create SQL statement */
+			TRACE("QUBE_PSQL::qpsql_execQuery---qube_query {}--->", qube_query);
+			PGresult *res;
+			
+    		res = PQexec(conn, qube_query.c_str());
+    		if (PQresultStatus(res) != PGRES_TUPLES_OK) {
+        		ERROR("QUBE_PSQL::qpsql_execQuery: No data was returned from the SQL Query just posted. SQL Return Error message: {}", PQerrorMessage(conn));
+        		rec_count = -1;
+    		} else {
+    			qube_psql::rec_count = PQntuples(res);
+			}
+
+			TRACE("QUBE_PSQL::qpsql_execQuery---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
+			FLUSH;
+			return res;
+		}
+
 		static std::string qpsql_get_quoted_value(std::string in_string) {
     		TRACE("QUBE_PSQL::qpsql_get_quoted_value---instr: {}--->", in_string);
 			char *escaped_val = PQescapeLiteral(conn, in_string.c_str(), in_string.length());
@@ -134,130 +268,8 @@ class qube_psql : public qube_log {
 			}
 		}
 
-		static std::vector<uint8_t> qpsql_get_block_from_hash(std::string hash) {
-            //SELECT a data block from the DB given a hash value....
-            TRACE("QUBE_FUSE::qpsql_get_block_from_hash---hash: {}--->", hash);
-			std::vector<uint8_t> data_block;
-
-            quoted_hash = qpsql_get_quoted_value(hash);
-			char *quoted_sql = (char *) malloc(strlen(qu_sql) + quoted_hash.length() + 1);
-    		std::sprintf(quoted_sql, qu_sql, quoted_hash.c_str());
- 
-            DEBUG("QUBE_FUSE::qpsql_get_block_from_hash: SELECT QUERY = {}", quoted_sql);
-            last_res = qpsql_execQuery(quoted_sql);
-			if (rec_count == 0) {
-				_qlog->warn("QUBE_FUSE::qpsql_get_block_from_hash: No records returned for hash.");
-				data_block.assign(NO_RECORDS, sizeof(NO_RECORDS));
-			} else {
-				std::string tmp_string = qpsql_get_unquoted_value(PQgetvalue(last_res, 0, 0));
-				data_block.assign(tmp_string.begin(), tmp_string.end());
-				DEBUG("QUBE_FUSE::qpsql_get_block_from_hash: Data block returned from DB. query = {} returned block = {}", quoted_sql, (char*)data_block.data()); 
-			}
-			TRACE("QUBE_FUSE::qpsql_get_block_from_hash: Leaving qpsql_get_block_from_hash with data block: {}", (char*)data_block.data());	
-			FLUSH;
-			return data_block;
-		}
-
-        static int qpsql_insert_hash(std::string hash, std::vector<uint8_t> *data_block) {
-            //INSERT a hash into the DB....
-            TRACE("QUBE_PSQL::qpsql_insert_hash---hash: {}---block: {}--->", hash, (char*)data_block->data());
-
-            quoted_hash = qpsql_get_quoted_value(hash);
-            quoted_block = qpsql_get_quoted_value(data_block);
-			//quoted_count = qpsql_get_quoted_value("1");
-            char *quoted_sql = (char *) malloc(strlen(ins_sql) + quoted_hash.length() + quoted_block.length() + quoted_count.length() + 1);
-            std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), quoted_block.c_str(), 1 );
-			std::string tmp_sql(quoted_sql);
-			int res;
-			FLUSH;
-
-            DEBUG("QUBE_PSQL::qpsql_insert_hash: INSERT QUERY = {}", tmp_sql);
-            last_ins = qpsql_execInsert(tmp_sql);
-			if (PQresultStatus(last_ins) != PGRES_COMMAND_OK) {
-				res = 0;
-				_qlog->critical("QUBE_PSQL::qpsql_insert_hash: Data insert failed into DB. query = {}", tmp_sql);
-			} else {
-				char *tuples = PQcmdTuples(last_ins);
-				res = atoi(tuples);
-				DEBUG("QUBE_PSQL::qpsql_insert_hash: {:d} rows inserted into DB. query = {}", res, tmp_sql);
-			}
-
-            TRACE("QUBE_PSQL::qpsql_insert_hash: ---[Leaving]---with rows inserted: {:d}--->", res);
-			FLUSH;
-            return res;
-        }
-
-		static int qpsql_incr_hash_count(std::string hash) {
-			TRACE("QUBE_PSQL::qpsql_incr_hash_count---hash {}--->", hash);
-			//PGresult *res;
-			
-			quoted_hash = qpsql_get_quoted_value(hash);
-			char *quoted_sql = (char *) malloc(strlen(use_incr) + quoted_hash.length() + 1);
-            std::sprintf(quoted_sql, use_incr, quoted_hash.c_str(), 1 );
-
-			qpsql_execQuery(quoted_sql);
-			rec_count = 0;
-			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
-			FLUSH;
-			return rec_count;
-		}
-
-		static PGresult* qpsql_decr_hash_count(std::string hash) {
-			TRACE("QUBE_PSQL::qpsql_decr_hash_count---hash {}--->", hash);
-			PGresult *res;
-			
-			quoted_hash = qpsql_get_quoted_value(hash);
-			char *quoted_sql = (char *) malloc(strlen(use_decr) + quoted_hash.length() + 1);
-            std::sprintf(quoted_sql, use_decr, quoted_hash.c_str(), 1 );
-
-			res = qpsql_execQuery(quoted_sql);
-
-			TRACE("QUBE_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
-			FLUSH;
-			return res;
-		}
-
-		static PGresult* qpsql_execQuery(std::string qube_query) {
-			/* Create SQL statement */
-			TRACE("QUBE_PSQL::qpsql_execQuery---qube_query {}--->", qube_query);
-			PGresult *res;
-			
-    		res = PQexec(conn, qube_query.c_str());
-    		if (PQresultStatus(res) != PGRES_TUPLES_OK) {
-        		ERROR("QUBE_PSQL::qpsql_execQuery: No data was returned from the SQL Query just posted. SQL Return Error message: {}", PQerrorMessage(conn));
-        		rec_count = -1;
-    		} else {
-    			qube_psql::rec_count = PQntuples(res);
-			}
-
-			TRACE("QUBE_PSQL::qpsql_execQuery---[Leaving]---with record count: {:d}--->", qube_psql::rec_count);
-			FLUSH;
-			return res;
-		}
-
-		static PGresult* qpsql_execInsert(std::string qube_query) {
-			/* Create SQL statement */
-			TRACE("QUBE_PSQL::qpsql_execInsert---qube_query {}--->", qube_query);
-			DEBUG(qube_query);
-			PGresult *res;
-
-    		res = PQexec(conn, qube_query.c_str());
-    		if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-        		ERROR("QUBE_PSQL::qpsql_execInsert: INSERT failed from the SQL Query just posted. SQL Return Error message: {}", PQerrorMessage(conn));
-    		}
-			TRACE("QUBE_PSQL::qpsql_execInsert:---[Leaving]--->");
-			FLUSH;
-			return res;
-		}
-
-		static void qpsql_release_query () { PQclear(last_res); PQclear(last_ins); }
-
-		static void qpsql_do_exit(int ex) {
-            //exStatus = ex;
-			//DEBUG("do_exit---[{:d}]--->", exStatus );
-		}
 };
-
+/**
 PGconn *qube_psql::conn = NULL;
 PGresult *qube_psql::last_res = NULL;
 PGresult *qube_psql::last_ins = NULL;
@@ -272,3 +284,4 @@ const char *qube_psql::qu_sql = "";
 const char *qube_psql::ins_sql = "";
 const char *qube_psql::use_incr = "";
 const char *qube_psql::use_decr = "";
+**/

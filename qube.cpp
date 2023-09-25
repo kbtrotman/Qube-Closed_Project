@@ -5,99 +5,42 @@
  * By K. B. Trotman
  * License: GNU GPL as of 2023
  *
- */
- 
-// For Logging!
-#include "spdlog/spdlog.h"
-#include "spdlog/sinks/daily_file_sink.h"
-#include "spdlog/fmt/fmt.h"
-#include "spdlog/fmt/bin_to_hex.h"
+ **/
 
-// Dedupe & crypto algorythms
-#include <openssl/sha.h>
-
-// Globals
+// Globals:  Private Defs, Then Classes
 #include "qube.hpp"
-
-// Functions & classes
-
-//Classes -> Lowest Level to highest.
-class qube_log {
-
-	public:
-
-		static std::shared_ptr<spdlog::logger> _qlog;
-
-		qube_log() {
-			/* Init Logger */
-			if (!logger_init) {
-				auto file_sink = std::make_shared<spdlog::sinks::daily_file_sink_st>("/var/log/qube.log", 23, 59);
-        		_qlog = std::make_shared<spdlog::logger>("qube_log", file_sink);
-
-				_qlog->set_level(spdlog::level::trace);
-				_qlog->flush_on(spdlog::level::err);
-				INFO("==========================================================");
-				INFO("QUBE_LOG::qube_log:   ***** Qube logging started. *****   ");
-				INFO("==========================================================");
-				FLUSH;
-				logger_init = true;
-			}			
-		}
-
-		~qube_log () {
-			_qlog->flush();
-			exit(exStatus);
-		}
-	
-	private:
-		static bool logger_init;
-		static int exStatus;
-};
-std::shared_ptr<spdlog::logger> qube_log::_qlog; // initialize static member
-bool qube_log::logger_init = false;
-int qube_log::exStatus = 0;
-
-#include "q_convert.hpp"
-#include "q_psql.hpp"
-
-class qube_hash : public qube_psql {
-
-	public:
-
-		qube_hash () {
-			TRACE("qube_hash::qube_hash: Hash Init--->");
-			FLUSH;
-		}
-
-		static std::string get_sha512_hash(const std::vector<uint8_t> v_str){
-			TRACE("qube_hash::get_sha512_hash---[{}]--->", (char*)v_str.data());
-			
-			// We have static sections, so let's blank everything to be safe here.
-			std::memset(hash, 0, SHA512_DIGEST_LENGTH);
-			ss.str("");
-			ss.clear();
-
-  			SHA512_CTX sha512;
-  			SHA512_Init(&sha512);
-  			SHA512_Update(&sha512, v_str.data(), v_str.size());
-  			SHA512_Final(hash, &sha512);
-
-			for(int i = 0; i < (SHA512_DIGEST_LENGTH); i++){
-				ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>( hash[i] );
-			}
-			TRACE("qube_hash::get_sha512_hash---[Leaving]---with hash string---[{}]--->.", ss.str());
-
-  			return ss.str();
-		}
-
-	private:
-		static unsigned char hash[SHA512_DIGEST_LENGTH];
-  		static std::stringstream ss;
-};
-unsigned char qube_hash::hash[SHA512_DIGEST_LENGTH] = {};
-std::stringstream qube_hash::ss=std::stringstream{};
+#include "q_log.hpp"
 #include "q_fuse.hpp"
 
+// Define all the static variables that need to always be available.
+std::shared_ptr<spdlog::logger> q_log::_qlog;
+bool q_log::logger_init;
+int q_log::exStatus;
+
+PGconn *qube_psql::conn = NULL;
+PGresult *qube_psql::last_res = NULL;
+PGresult *qube_psql::last_ins = NULL;
+int qube_psql::rec_count = 0;
+int qube_psql::row= 0;
+int qube_psql::col= 0;
+bool qube_psql::psql_init = false;
+std::string qube_psql::quoted_hash = "";
+std::string qube_psql::quoted_block = "";
+std::string qube_psql::quoted_count = "";
+const char *qube_psql::qu_sql = "";
+const char *qube_psql::ins_sql = "";
+const char *qube_psql::use_incr = "";
+const char *qube_psql::use_decr = "";
+
+unsigned char q_dedupe::hash[SHA512_DIGEST_LENGTH] = {};
+std::stringstream q_dedupe::ss=std::stringstream{};
+
+struct fuse_args qube_fuse::args = {};
+struct qfs_state* qube_fuse::qfs_data = {};
+struct fuse_operations qube_fuse::qfs_operations_ = {};
+fuse_fill_dir_flags qube_fuse::fill_dir_plus = {};
+std::string root_dir = "";
+char* qube_fuse::last_full_path = NULL;
 
 // Main entry
 int main( int argc, char *argv[] )
@@ -105,13 +48,13 @@ int main( int argc, char *argv[] )
 
 	qube_fuse qf;
 
-	qube_log::_qlog->info("====================================");
-	qube_log::_qlog->info("===  PG Server version = {:d}  ===", qf.qpsql_getServerVers());
-	qube_log::_qlog->info("====================================");	
+	INFO("====================================");
+	INFO("===  PG Server version = {:d}  ===", qf.qpsql_getServerVers());
+	INFO("====================================");	
 
-    qube_log::_qlog->info("=================================");
-    qube_log::_qlog->info("=====  Filesystem Starting ======");
-    qube_log::_qlog->info("=================================");
+    INFO("=================================");
+    INFO("=====  Filesystem Starting ======");
+    INFO("=================================");
 
 	// Startup the filesystem
   	return qf.run(argc, argv);
