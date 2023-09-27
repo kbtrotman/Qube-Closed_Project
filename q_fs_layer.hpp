@@ -25,6 +25,7 @@ class qube_FS {
 	public:
 
      	qube_FS() {
+
         }
 
         // All globally static methods below this point. They are interrupt-driven......
@@ -86,5 +87,6 @@ class qube_FS {
 			// !!!!!!!!
             return 0;
         }        
-
+    private:
+        static q_log *QLOG;
 };

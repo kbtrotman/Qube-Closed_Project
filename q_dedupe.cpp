@@ -9,6 +9,9 @@
     
 #include "q_dedupe.hpp"
 
+unsigned char q_dedupe::hash[SHA512_DIGEST_LENGTH] = {};
+std::stringstream q_dedupe::ss=std::stringstream{};
+
     std::string q_dedupe::get_sha512_hash(const std::vector<uint8_t> v_str){
         TRACE("qube_hash::get_sha512_hash---[{}]--->", (char*)v_str.data());
         

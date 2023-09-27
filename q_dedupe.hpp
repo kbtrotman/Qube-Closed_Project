@@ -25,6 +25,7 @@ class q_dedupe : public qube_psql {
 		static std::string get_sha512_hash(const std::vector<uint8_t> v_str);
 
 	private:
+		static q_log *QLOG;
 		static unsigned char hash[SHA512_DIGEST_LENGTH];
   		static std::stringstream ss;
 };
