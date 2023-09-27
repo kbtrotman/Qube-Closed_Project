@@ -23,11 +23,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "(This variable does not exist and should not be used)"
+					"value" : "Path to a program."
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : ""
+			"type" : "FILEPATH",
+			"value" : "BZRCOMMAND-NOTFOUND"
 		},
 		{
 			"name" : "CMAKE_ADDR2LINE",
@@ -43,7 +43,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/addr2line"
+			"value" : "/bin/addr2line"
 		},
 		{
 			"name" : "CMAKE_AR",
@@ -59,7 +59,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/ar"
+			"value" : "/bin/ar"
 		},
 		{
 			"name" : "CMAKE_BUILD_TYPE",
@@ -83,7 +83,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/trotmkeb/c/Qube/build"
+			"value" : "/home/ktrotman/c/Qube/build"
 		},
 		{
 			"name" : "CMAKE_CACHE_MAJOR_VERSION",
@@ -107,7 +107,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "20"
+			"value" : "17"
 		},
 		{
 			"name" : "CMAKE_CACHE_PATCH_VERSION",
@@ -119,7 +119,23 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "2"
+			"value" : "5"
+		},
+		{
+			"name" : "CMAKE_COLOR_MAKEFILE",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Enable/Disable color output during build."
+				}
+			],
+			"type" : "BOOL",
+			"value" : "ON"
 		},
 		{
 			"name" : "CMAKE_COMMAND",
@@ -131,7 +147,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/bin/cmake"
+			"value" : "/usr/bin/cmake3"
 		},
 		{
 			"name" : "CMAKE_CPACK_COMMAND",
@@ -143,7 +159,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/bin/cpack"
+			"value" : "/usr/bin/cpack3"
 		},
 		{
 			"name" : "CMAKE_CTEST_COMMAND",
@@ -159,7 +175,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/bin/ctest"
+			"value" : "/usr/bin/ctest3"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER",
@@ -171,11 +187,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "CXX compiler"
+					"value" : "No help, variable specified on the command line."
 				}
 			],
-			"type" : "STRING",
-			"value" : "/usr/bin/g++"
+			"type" : "FILEPATH",
+			"value" : "/bin/g++"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_AR",
@@ -191,7 +207,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ar"
+			"value" : "/bin/gcc-ar"
 		},
 		{
 			"name" : "CMAKE_CXX_COMPILER_RANLIB",
@@ -207,7 +223,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc-ranlib"
+			"value" : "/bin/gcc-ranlib"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS",
@@ -271,7 +287,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "-O3 -DNDEBUG"
+			"value" : "-O2 -DNDEBUG"
 		},
 		{
 			"name" : "CMAKE_CXX_FLAGS_RELWITHDEBINFO",
@@ -299,7 +315,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcc"
+			"value" : "/bin/gcc"
 		},
 		{
 			"name" : "CMAKE_DLLTOOL",
@@ -316,6 +332,18 @@
 			],
 			"type" : "FILEPATH",
 			"value" : "CMAKE_DLLTOOL-NOTFOUND"
+		},
+		{
+			"name" : "CMAKE_EDIT_COMMAND",
+			"properties" : 
+			[
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to cache edit program executable."
+				}
+			],
+			"type" : "INTERNAL",
+			"value" : "/usr/bin/ccmake3"
 		},
 		{
 			"name" : "CMAKE_EXECUTABLE_FORMAT",
@@ -414,6 +442,10 @@
 			"properties" : 
 			[
 				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
 					"name" : "HELPSTRING",
 					"value" : "No help, variable specified on the command line."
 				}
@@ -443,7 +475,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "Ninja"
+			"value" : "Unix Makefiles"
 		},
 		{
 			"name" : "CMAKE_GENERATOR_INSTANCE",
@@ -491,7 +523,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/home/trotmkeb/c/Qube"
+			"value" : "/home/ktrotman/c/Qube"
 		},
 		{
 			"name" : "CMAKE_INSTALL_PREFIX",
@@ -531,7 +563,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/ld"
+			"value" : "/bin/ld"
 		},
 		{
 			"name" : "CMAKE_MAKE_PROGRAM",
@@ -543,11 +575,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "Program used to build from build.ninja files."
+					"value" : "Path to a program."
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/ninja-build"
+			"value" : "/bin/gmake"
 		},
 		{
 			"name" : "CMAKE_MODULE_LINKER_FLAGS",
@@ -643,7 +675,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/nm"
+			"value" : "/bin/nm"
 		},
 		{
 			"name" : "CMAKE_NUMBER_OF_MAKEFILES",
@@ -671,7 +703,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/objcopy"
+			"value" : "/bin/objcopy"
 		},
 		{
 			"name" : "CMAKE_OBJDUMP",
@@ -687,7 +719,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/objdump"
+			"value" : "/bin/objdump"
 		},
 		{
 			"name" : "CMAKE_PLATFORM_INFO_INITIALIZED",
@@ -811,7 +843,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/ranlib"
+			"value" : "/bin/ranlib"
 		},
 		{
 			"name" : "CMAKE_READELF",
@@ -827,7 +859,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/readelf"
+			"value" : "/bin/readelf"
 		},
 		{
 			"name" : "CMAKE_ROOT",
@@ -839,7 +871,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/share/cmake"
+			"value" : "/usr/share/cmake3"
 		},
 		{
 			"name" : "CMAKE_SHARED_LINKER_FLAGS",
@@ -1047,7 +1079,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/strip"
+			"value" : "/bin/strip"
 		},
 		{
 			"name" : "CMAKE_UNAME",
@@ -1059,7 +1091,7 @@
 				}
 			],
 			"type" : "INTERNAL",
-			"value" : "/usr/bin/uname"
+			"value" : "/bin/uname"
 		},
 		{
 			"name" : "CMAKE_VERBOSE_MAKEFILE",
@@ -1091,7 +1123,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/gcov"
+			"value" : "/bin/gcov"
 		},
 		{
 			"name" : "COVERAGE_EXTRA_FLAGS",
@@ -1407,11 +1439,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "(This variable does not exist and should not be used)"
+					"value" : "Path to a program."
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : ""
+			"type" : "FILEPATH",
+			"value" : "CVSCOMMAND-NOTFOUND"
 		},
 		{
 			"name" : "CVS_UPDATE_OPTIONS",
@@ -1423,11 +1455,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "(This variable does not exist and should not be used)"
+					"value" : "Options passed to the cvs update command."
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : ""
+			"type" : "STRING",
+			"value" : "-d -A -P"
 		},
 		{
 			"name" : "DART_TESTING_TIMEOUT",
@@ -1459,7 +1491,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/git"
+			"value" : "/bin/git"
 		},
 		{
 			"name" : "HGCOMMAND",
@@ -1471,11 +1503,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "(This variable does not exist and should not be used)"
+					"value" : "Path to a program."
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : ""
+			"type" : "FILEPATH",
+			"value" : "HGCOMMAND-NOTFOUND"
 		},
 		{
 			"name" : "MAKECOMMAND",
@@ -1491,7 +1523,7 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "/usr/bin/cmake --build . --config \"${CTEST_CONFIGURATION_TYPE}\""
+			"value" : "/usr/bin/cmake3 --build . --config \"${CTEST_CONFIGURATION_TYPE}\" -- -i"
 		},
 		{
 			"name" : "MEMORYCHECK_COMMAND",
@@ -1507,7 +1539,7 @@
 				}
 			],
 			"type" : "FILEPATH",
-			"value" : "/usr/bin/valgrind"
+			"value" : "/bin/valgrind"
 		},
 		{
 			"name" : "MEMORYCHECK_SUPPRESSIONS_FILE",
@@ -1535,11 +1567,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "(This variable does not exist and should not be used)"
+					"value" : "Path to a program."
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : ""
+			"type" : "FILEPATH",
+			"value" : "P4COMMAND-NOTFOUND"
 		},
 		{
 			"name" : "QubeFS_BINARY_DIR",
@@ -1551,7 +1583,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/trotmkeb/c/Qube/build"
+			"value" : "/home/ktrotman/c/Qube/build"
 		},
 		{
 			"name" : "QubeFS_SOURCE_DIR",
@@ -1563,7 +1595,7 @@
 				}
 			],
 			"type" : "STATIC",
-			"value" : "/home/trotmkeb/c/Qube"
+			"value" : "/home/ktrotman/c/Qube"
 		},
 		{
 			"name" : "SITE",
@@ -1579,7 +1611,39 @@
 				}
 			],
 			"type" : "STRING",
-			"value" : "ricbackuputil"
+			"value" : "dev01.kevinslab.com"
+		},
+		{
+			"name" : "SLURM_SBATCH_COMMAND",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to the SLURM sbatch executable"
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "SLURM_SBATCH_COMMAND-NOTFOUND"
+		},
+		{
+			"name" : "SLURM_SRUN_COMMAND",
+			"properties" : 
+			[
+				{
+					"name" : "ADVANCED",
+					"value" : "1"
+				},
+				{
+					"name" : "HELPSTRING",
+					"value" : "Path to the SLURM srun executable"
+				}
+			],
+			"type" : "FILEPATH",
+			"value" : "SLURM_SRUN_COMMAND-NOTFOUND"
 		},
 		{
 			"name" : "SVNCOMMAND",
@@ -1591,11 +1655,11 @@
 				},
 				{
 					"name" : "HELPSTRING",
-					"value" : "(This variable does not exist and should not be used)"
+					"value" : "Path to a program."
 				}
 			],
-			"type" : "UNINITIALIZED",
-			"value" : ""
+			"type" : "FILEPATH",
+			"value" : "/bin/svn"
 		}
 	],
 	"kind" : "cache",
