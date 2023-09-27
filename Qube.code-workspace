@@ -1,7 +1,15 @@
 {
 	"folders": [
 		{
+<<<<<<< HEAD
 			"path": "."
 		}
 	]
+=======
+			"name": "Qube",
+			"path": "Qube"
+		}
+	],
+	"settings": {}
+>>>>>>> f5382e308c32540d7a8a5c988a3eda3ea1bdda1a
 }
