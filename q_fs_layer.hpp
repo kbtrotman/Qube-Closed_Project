@@ -13,6 +13,7 @@
 
 #include "qube.hpp"
 #include "q_log.hpp"
+	extern q_log* QLOG;
 
 struct qfs_state{
     char *devicepath;
@@ -88,5 +89,5 @@ class qube_FS {
             return 0;
         }        
     private:
-        static q_log *QLOG;
+
 };

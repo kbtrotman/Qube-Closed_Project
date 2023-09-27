@@ -137,7 +137,6 @@ class qube_fuse : public fuse_operations, public q_dedupe , public qube_FS {
 
 	// These obviously are not meant to be accessible outside the class ------------------>
 	private:
-		static q_log *QLOG;
 		static int mknod_wrapper(int dirfd, const char *path, const char *link, int mode, dev_t rdev);
 
 

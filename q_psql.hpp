@@ -13,7 +13,6 @@
 
 #include <libpq-fe.h>
 
-#include "qube.hpp"
 #include "q_convert.hpp"
 
 class qube_psql : public q_convert {
@@ -169,7 +168,6 @@ class qube_psql : public q_convert {
 
 
 	private:
-		static q_log *QLOG;
 		int		q_psql_vers;
     	static PGconn     *conn;
 		static bool 	  psql_init;

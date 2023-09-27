@@ -9,7 +9,10 @@
 
 #pragma once
 
+#include "qube.hpp"
 #include "q_log.hpp"
+	extern q_log* QLOG;
+
 
 class q_convert {
 

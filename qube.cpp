@@ -10,7 +10,12 @@
 // Globals:  Private Defs, Then Classes
 #include "qube.hpp"
 #include "q_log.hpp"
+	q_log* QLOG = q_log::get_log_instance();
+	extern q_log::_qlog;
+
 #include "q_fuse.hpp"
+
+
 
 // Define all the static variables that need to always be available.
 
@@ -34,7 +39,6 @@ const char *qube_psql::use_decr = "";
 // Main entry
 int main( int argc, char *argv[] )
 {
-	static q_log *QLOG;
 	qube_fuse qf;
 
 	INFO("====================================");
