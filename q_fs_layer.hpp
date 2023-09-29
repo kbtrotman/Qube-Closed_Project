@@ -13,7 +13,10 @@
 
 #include "qube.hpp"
 #include "q_log.hpp"
-	extern q_log* QLOG;
+    extern q_log& QLOG;
+    extern std::shared_ptr<spdlog::logger> _Qlog;
+
+
 
 struct qfs_state{
     char *devicepath;
@@ -25,8 +28,7 @@ class qube_FS {
 
 	public:
 
-     	qube_FS() {
-
+        qube_FS() {
         }
 
         // All globally static methods below this point. They are interrupt-driven......
@@ -90,4 +92,6 @@ class qube_FS {
         }        
     private:
 
+
 };
+

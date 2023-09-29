@@ -14,6 +14,7 @@
 #include <libpq-fe.h>
 
 #include "q_convert.hpp"
+#include "q_log.hpp"
 
 class qube_psql : public q_convert {
 

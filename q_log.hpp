@@ -15,31 +15,26 @@
 #include "spdlog/fmt/fmt.h"
 #include "spdlog/fmt/bin_to_hex.h"
 
-#define TRACE QLOG->_qlog->trace
-#define DEBUG QLOG->_qlog->debug
-#define INFO QLOG->_qlog->info
-#define WARN QLOG->_qlog->warn
-#define ERROR QLOG->_qlog->error
-#define CRITICAL QLOG->_qlog->critical
-#define FLUSH  QLOG->_qlog->flush()
+#define TRACE _Qlog->trace
+#define DEBUG _Qlog->debug
+#define INFO _Qlog->info
+#define WARN _Qlog->warn
+#define ERROR _Qlog->error
+#define CRITICAL _Qlog->critical
+#define FLUSH  _Qlog->flush()
 
 class q_log {
 
 	public:
-        static std::shared_ptr<spdlog::logger> _qlog;
-        static q_log* get_log_instance();
-
+		static q_log& getInstance();
+        static std::shared_ptr<spdlog::logger> get_log_instance();
+		static std::shared_ptr<spdlog::logger> _qlog;
 
     private:
 		q_log();
 		~q_log ();
-		static q_log *class_instance; // Create the instance once
 		static int exStatus;
 };
-
-
-
-
 
 
 

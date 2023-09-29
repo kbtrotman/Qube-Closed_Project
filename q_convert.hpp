@@ -11,15 +11,17 @@
 
 #include "qube.hpp"
 #include "q_log.hpp"
-	extern q_log* QLOG;
 
+extern q_log& QLOG;
+extern std::shared_ptr<spdlog::logger> _Qlog;
 
 class q_convert {
 
 	public:
-
+        
 
 		q_convert () {
+
         }
 
         static std::string char2string (char *str) {
@@ -85,7 +87,5 @@ class q_convert {
             return isErrorCode;
         }
 */
-
-    private:
 
 };

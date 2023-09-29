@@ -17,6 +17,8 @@ add_executable(${PROJECT_NAME}   qube.cpp
                                  q_convert.hpp
                                  q_dedupe.hpp
                                  q_dedupe.cpp
+                                 q_log.hpp
+                                 q_log.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC 

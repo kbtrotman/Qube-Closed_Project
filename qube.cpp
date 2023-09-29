@@ -10,9 +10,8 @@
 // Globals:  Private Defs, Then Classes
 #include "qube.hpp"
 #include "q_log.hpp"
-	q_log* QLOG = q_log::get_log_instance();
-	extern q_log::_qlog;
-
+    q_log& QLOG = q_log::getInstance();
+	static std::shared_ptr<spdlog::logger> _Qlog = QLOG.get_log_instance();
 #include "q_fuse.hpp"
 
 
@@ -39,6 +38,7 @@ const char *qube_psql::use_decr = "";
 // Main entry
 int main( int argc, char *argv[] )
 {
+	static std::shared_ptr<spdlog::logger> _Qlog = QLOG.get_log_instance();
 	qube_fuse qf;
 
 	INFO("====================================");

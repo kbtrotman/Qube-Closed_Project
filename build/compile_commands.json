@@ -13,5 +13,10 @@
   "directory": "/home/trotmkeb/c/Qube/build",
   "command": "/usr/bin/g++ -I../ -I/usr/include/fuse3 -I/usr/include/spdlog -I/usr/include/pq -g -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors -o CMakeFiles/QubeFS.dir/q_dedupe.cpp.o -c /home/trotmkeb/c/Qube/q_dedupe.cpp",
   "file": "/home/trotmkeb/c/Qube/q_dedupe.cpp"
+},
+{
+  "directory": "/home/trotmkeb/c/Qube/build",
+  "command": "/usr/bin/g++ -I../ -I/usr/include/fuse3 -I/usr/include/spdlog -I/usr/include/pq -g -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors -o CMakeFiles/QubeFS.dir/q_log.cpp.o -c /home/trotmkeb/c/Qube/q_log.cpp",
+  "file": "/home/trotmkeb/c/Qube/q_log.cpp"
 }
 ]

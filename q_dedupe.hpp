@@ -13,6 +13,7 @@
 #include <openssl/sha.h>
 
 #include "q_psql.hpp"
+#include "q_log.hpp"
 
 class q_dedupe : public qube_psql {
 
