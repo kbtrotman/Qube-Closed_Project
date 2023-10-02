@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}   qube.cpp
                                  q_fuse.cpp
                                  q_fs_layer.hpp
                                  q_convert.hpp
+                                 q_convert.cpp
                                  q_dedupe.hpp
                                  q_dedupe.cpp
                                  q_log.hpp

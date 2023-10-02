@@ -22,7 +22,7 @@
 #include "q_dedupe.hpp"
 #include "q_log.hpp"
 
-class qube_fuse : public fuse_operations, public q_dedupe , public qube_FS {
+class q_fuse : public fuse_operations, public q_dedupe , public q_FS {
 
 	public:
 		static struct fuse_args args;
@@ -32,54 +32,9 @@ class qube_fuse : public fuse_operations, public q_dedupe , public qube_FS {
 		static std::string root_dir;
 		static char *last_full_path;
 
- 		qube_fuse() {
-			// set the methods of the fuse_operations struct to the methods of the QubeFileSystem class
-        	qfs_operations_.getattr         = &qube_fuse::qfs_getattr;
-			qfs_operations_.readlink        = &qube_fuse::qfs_readlink;
-			qfs_operations_.mknod	        = &qube_fuse::qfs_mknod;
-			qfs_operations_.mkdir	        = &qube_fuse::qfs_mkdir;
-			qfs_operations_.unlink          = &qube_fuse::qfs_unlink;
-			qfs_operations_.rmdir	        = &qube_fuse::qfs_rmdir;
-			qfs_operations_.symlink         = &qube_fuse::qfs_symlink;
-			qfs_operations_.rename          = &qube_fuse::qfs_rename; 
-			qfs_operations_.link            = &qube_fuse::qfs_link; 
-			qfs_operations_.chmod           = &qube_fuse::qfs_chmod; 
-			qfs_operations_.chown           = &qube_fuse::qfs_chown; 
-			qfs_operations_.truncate        = &qube_fuse::qfs_truncate; 
-			qfs_operations_.open            = &qube_fuse::qfs_open; 
-			qfs_operations_.read	        = &qube_fuse::qfs_read;
-			qfs_operations_.write	        = &qube_fuse::qfs_write;
-			qfs_operations_.statfs          = &qube_fuse::qfs_statfs;
-			qfs_operations_.flush           = &qube_fuse::qfs_flush;
-			qfs_operations_.release         = &qube_fuse::qfs_release;
-			qfs_operations_.fsync           = &qube_fuse::qfs_fsync;
-			qfs_operations_.getxattr        = &qube_fuse::qfs_getxattr;
-			qfs_operations_.setxattr        = &qube_fuse::qfs_setxattr;
-			qfs_operations_.listxattr       = &qube_fuse::qfs_listxattr;
-			qfs_operations_.removexattr     = &qube_fuse::qfs_removexattr;
-			qfs_operations_.opendir         = &qube_fuse::qfs_opendir;
-			qfs_operations_.readdir         = &qube_fuse::qfs_readdir;
-			qfs_operations_.releasedir      = &qube_fuse::qfs_releasedir;
-			qfs_operations_.fsyncdir        = &qube_fuse::qfs_fsyncdir;
-			qfs_operations_.destroy         = &qube_fuse::qfs_destroy;
-			qfs_operations_.access          = &qube_fuse::qfs_access;
-			qfs_operations_.create          = &qube_fuse::qfs_create;
-			qfs_operations_.lock            = &qube_fuse::qfs_lock;
-			qfs_operations_.utimens         = &qube_fuse::qfs_utimens;
-			qfs_operations_.bmap            = &qube_fuse::qfs_bmap;
-			qfs_operations_.ioctl           = &qube_fuse::qfs_ioctl;
-			qfs_operations_.poll            = &qube_fuse::qfs_poll;
-//			qfs_operations_.write_buf       = &qube_fuse::qfs_write_buf;
-//			qfs_operations_.read_buf        = &qube_fuse::qfs_read_buf;
-			qfs_operations_.flock           = &qube_fuse::qfs_flock;
-			qfs_operations_.fallocate       = &qube_fuse::qfs_fallocate;
-			qfs_operations_.init			= &qube_fuse::qfs_init;
-		}
+ 		q_fuse(q_log& q);
 
-		~qube_fuse() {
-			close(settings.src_fd);
-		}
-
+		~q_fuse();
 		void print_usage();
 		int run(int argc, char* argv[]);
 
@@ -142,11 +97,3 @@ class qube_fuse : public fuse_operations, public q_dedupe , public qube_FS {
 
 
 };
-/**
-struct fuse_args qube_fuse::args = {};
-struct qfs_state* qube_fuse::qfs_data = {};
-struct fuse_operations qube_fuse::qfs_operations_ = {};
-fuse_fill_dir_flags qube_fuse::fill_dir_plus = {};
-std::string root_dir = "";
-char* qube_fuse::last_full_path = NULL;
-**/

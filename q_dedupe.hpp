@@ -15,11 +15,11 @@
 #include "q_psql.hpp"
 #include "q_log.hpp"
 
-class q_dedupe : public qube_psql {
+class q_dedupe : public q_psql {
 
 	public:
 
-		q_dedupe () {
+		q_dedupe (q_log& q) : q_psql(q){
 			TRACE("qube_hash::qube_hash: Hash Init--->");
 			FLUSH;
 		}

@@ -10,20 +10,69 @@
 
 #include "q_fuse.hpp"
 
-struct fuse_args qube_fuse::args = {};
-struct qfs_state* qube_fuse::qfs_data = {};
-struct fuse_operations qube_fuse::qfs_operations_ = {};
-fuse_fill_dir_flags qube_fuse::fill_dir_plus = {};
+struct fuse_args q_fuse::args = {};
+struct qfs_state* q_fuse::qfs_data = {};
+struct fuse_operations q_fuse::qfs_operations_ = {};
+fuse_fill_dir_flags q_fuse::fill_dir_plus = {};
 std::string root_dir = "";
-char* qube_fuse::last_full_path = NULL;
+char* q_fuse::last_full_path = NULL;
+q_log& qlog = q_log::getInstance();
+std::shared_ptr<spdlog::logger> _Qlog = nullptr;
 
+    q_fuse::q_fuse(q_log& q) : q_dedupe(q), q_FS(q) {
+        // set the methods of the fuse_operations struct to the methods of the QubeFileSystem class
+        qfs_operations_.getattr         = &q_fuse::qfs_getattr;
+        qfs_operations_.readlink        = &q_fuse::qfs_readlink;
+        qfs_operations_.mknod	        = &q_fuse::qfs_mknod;
+        qfs_operations_.mkdir	        = &q_fuse::qfs_mkdir;
+        qfs_operations_.unlink          = &q_fuse::qfs_unlink;
+        qfs_operations_.rmdir	        = &q_fuse::qfs_rmdir;
+        qfs_operations_.symlink         = &q_fuse::qfs_symlink;
+        qfs_operations_.rename          = &q_fuse::qfs_rename; 
+        qfs_operations_.link            = &q_fuse::qfs_link; 
+        qfs_operations_.chmod           = &q_fuse::qfs_chmod; 
+        qfs_operations_.chown           = &q_fuse::qfs_chown; 
+        qfs_operations_.truncate        = &q_fuse::qfs_truncate; 
+        qfs_operations_.open            = &q_fuse::qfs_open; 
+        qfs_operations_.read	        = &q_fuse::qfs_read;
+        qfs_operations_.write	        = &q_fuse::qfs_write;
+        qfs_operations_.statfs          = &q_fuse::qfs_statfs;
+        qfs_operations_.flush           = &q_fuse::qfs_flush;
+        qfs_operations_.release         = &q_fuse::qfs_release;
+        qfs_operations_.fsync           = &q_fuse::qfs_fsync;
+        qfs_operations_.getxattr        = &q_fuse::qfs_getxattr;
+        qfs_operations_.setxattr        = &q_fuse::qfs_setxattr;
+        qfs_operations_.listxattr       = &q_fuse::qfs_listxattr;
+        qfs_operations_.removexattr     = &q_fuse::qfs_removexattr;
+        qfs_operations_.opendir         = &q_fuse::qfs_opendir;
+        qfs_operations_.readdir         = &q_fuse::qfs_readdir;
+        qfs_operations_.releasedir      = &q_fuse::qfs_releasedir;
+        qfs_operations_.fsyncdir        = &q_fuse::qfs_fsyncdir;
+        qfs_operations_.destroy         = &q_fuse::qfs_destroy;
+        qfs_operations_.access          = &q_fuse::qfs_access;
+        qfs_operations_.create          = &q_fuse::qfs_create;
+        qfs_operations_.lock            = &q_fuse::qfs_lock;
+        qfs_operations_.utimens         = &q_fuse::qfs_utimens;
+        qfs_operations_.bmap            = &q_fuse::qfs_bmap;
+        qfs_operations_.ioctl           = &q_fuse::qfs_ioctl;
+        qfs_operations_.poll            = &q_fuse::qfs_poll;
+//			qfs_operations_.write_buf       = &q_fuse::qfs_write_buf;
+//			qfs_operations_.read_buf        = &q_fuse::qfs_read_buf;
+        qfs_operations_.flock           = &q_fuse::qfs_flock;
+        qfs_operations_.fallocate       = &q_fuse::qfs_fallocate;
+        qfs_operations_.init			= &q_fuse::qfs_init;
+    }
 
-    void qube_fuse::print_usage() {
+    q_fuse::~q_fuse() {
+        close(settings.src_fd);
+    }
+
+    void q_fuse::print_usage() {
         std::cout << "usage: ./" << settings.progname << " [FUSE and mount options] <devicesourcepath> <mountPoint>";
         abort();
     }
 
-    int qube_fuse::run(int argc, char* argv[]) {
+    int q_fuse::run(int argc, char* argv[]) {
         TRACE("QUBE_FUSE::run---[{:d}]---[{}]---[{}]--->",argc, argv[argc-1], argv[argc-2]);
         settings.progname = "qubeFS";
         /* Check that a source directory and a mount point was given */
@@ -96,7 +145,7 @@ char* qube_fuse::last_full_path = NULL;
 
     */
 
-    void *qube_fuse::qfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg){
+    void *q_fuse::qfs_init(struct fuse_conn_info *conn, struct fuse_config *cfg){
             TRACE("QUBE_FUSE::qfs_init:---{}--->",  PRINT_CONN_STRING(conn) );
 
             cfg->use_ino = 0;
@@ -113,7 +162,7 @@ char* qube_fuse::last_full_path = NULL;
             return QFS_DATA;
     }
 
-    int qube_fuse::qfs_getattr( const char *path, struct stat *stbuf, struct fuse_file_info *fi ) {
+    int q_fuse::qfs_getattr( const char *path, struct stat *stbuf, struct fuse_file_info *fi ) {
         TRACE("QUBE_FUSE::qfs_getattr---[{}]--->", path);
         int retstat = 0;
 
@@ -134,7 +183,7 @@ char* qube_fuse::last_full_path = NULL;
         return retstat;
     }
 
-    int qube_fuse::qfs_readlink (const char *path, char *buf, size_t size) {
+    int q_fuse::qfs_readlink (const char *path, char *buf, size_t size) {
         TRACE("QUBE_FUSE::qfs-readlink---[{}]---[{}]---[{:f}]--->", path, buf, size );
         int res;
 
@@ -154,7 +203,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_mknod( const char *path, mode_t mode, dev_t rdev ) {
+    int q_fuse::qfs_mknod( const char *path, mode_t mode, dev_t rdev ) {
         TRACE("QUBE_FUSE::qfs_mknod---[{}]---[{:d}]---[{:d}]--->", path, mode, rdev );
         int res;
 
@@ -167,7 +216,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_mkdir( const char *path, mode_t mode )
+    int q_fuse::qfs_mkdir( const char *path, mode_t mode )
     {
         TRACE("QUBE_FUSE:qfs_mkdir---[{}]---[{:d}]--->", path, mode );
         int res;
@@ -187,7 +236,7 @@ char* qube_fuse::last_full_path = NULL;
         return res;
     }
 
-    int qube_fuse::qfs_unlink (const char *path) {
+    int q_fuse::qfs_unlink (const char *path) {
         TRACE("QUBE_FUSE::qfs_unlink---[{}]--->", path );
         int res;
 
@@ -206,7 +255,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_rmdir (const char *dirname) {
+    int q_fuse::qfs_rmdir (const char *dirname) {
         TRACE("QUBE_FUSE::qfs_rmdir---[{}]--->", dirname );
         int res;
 
@@ -223,7 +272,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_symlink(const char *from, const char *to) {
+    int q_fuse::qfs_symlink(const char *from, const char *to) {
         TRACE("QUBE_FUSE::qfs_symlink---[{}]---[{}]--->", *from, *to );
         int res;
 
@@ -236,14 +285,14 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_rename(const char *path, const char *c, unsigned int flags) {
+    int q_fuse::qfs_rename(const char *path, const char *c, unsigned int flags) {
         TRACE("QUBE_FUSE::qfs_rename---[{}]---[{}]---[{:d}]--->", *path, *c, flags );
         TRACE("QUBE_FUSE::qfs_rename---[Leaving]--->");
         FLUSH;
         return 0;
     }
 
-    int qube_fuse::qfs_link(const char *path, const char *linkname) {
+    int q_fuse::qfs_link(const char *path, const char *linkname) {
         TRACE("QUBE_FUSE::qfs_link---[{}]---[{}]--->", path, linkname );
         TRACE("QUBE_FUSE::qfs_link---[Leaving]--->");
         FLUSH;
@@ -251,28 +300,28 @@ char* qube_fuse::last_full_path = NULL;
 
     }
     
-    int qube_fuse::qfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
+    int q_fuse::qfs_chmod(const char *path, mode_t mode, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_chmod---[{}]---[{:d}]--->", path, mode );
         TRACE("QUBE_FUSE::qfs_chmod---[Leaving]--->");
         FLUSH;
         return 0;
     } 
     
-    int qube_fuse::qfs_chown(const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi) {
+    int q_fuse::qfs_chown(const char *path, uid_t uid, gid_t gid, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_chown---[{}]---[{:d}]---[{:d}]--->", path, uid, gid );
         TRACE("QUBE_FUSE::qfs_chown---[Leaving]--->");
         FLUSH;
         return 0;
     }
     
-    int qube_fuse::qfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {
+    int q_fuse::qfs_truncate(const char *path, off_t offset, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_truncate---[{}]---[{:d}]--->", path, offset );
         TRACE("QUBE_FUSE::qfs_truncate---[Leaving]--->");
         FLUSH;
         return 0;
     }
 
-    int qube_fuse::qfs_open(const char *path, struct fuse_file_info *fi) {
+    int q_fuse::qfs_open(const char *path, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_open---[{}]--->", path );
         FLUSH;
         int local_fh;
@@ -295,7 +344,7 @@ char* qube_fuse::last_full_path = NULL;
         return res;
     }
 
-    int qube_fuse::qfs_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi ) {
+    int q_fuse::qfs_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi ) {
         TRACE("QUBE_FUSE:qfs_read---[{}]--->", path );
         int fd;
         int res;
@@ -345,7 +394,7 @@ char* qube_fuse::last_full_path = NULL;
         return actual_contents.size();
     }
 
-    int qube_fuse::qfs_write( const char *path, const char *buf, size_t size, off_t offset, 
+    int q_fuse::qfs_write( const char *path, const char *buf, size_t size, off_t offset, 
         struct fuse_file_info *info ) {
 
         TRACE("QUBE_FUSE::qfs_write---[{}]---[{}]-->", path, buf);
@@ -386,7 +435,7 @@ char* qube_fuse::last_full_path = NULL;
 
                 std::vector<uint8_t> block_in_DB(qpsql_get_block_from_hash(block_hash));
                 FLUSH;
-                if ( qube_psql::rec_count == 0 ) {
+                if ( q_psql::rec_count == 0 ) {
                     //hash doesn't exist, save it...
                     int ins_rows = 0;
                     ins_rows = qpsql_insert_hash(block_hash, &cur_block);
@@ -431,7 +480,7 @@ char* qube_fuse::last_full_path = NULL;
         return size;   
     }
 
-    int qube_fuse::qfs_statfs (const char *path, struct statvfs *stbuf) {
+    int q_fuse::qfs_statfs (const char *path, struct statvfs *stbuf) {
 
         TRACE("QUBE_FUSE::qfs_statfs---[{}]--->", path );
         int res;
@@ -447,7 +496,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_flush(const char *path, struct fuse_file_info *fi) {
+    int q_fuse::qfs_flush(const char *path, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_flush---[{}]--->", path);
         // This is a no-op call. We do nothing. Nothing at all. Zip. Zero. Nada. 1 less than 1.
         TRACE("QUBE_FUSE::qfs_flush---[Leaving]--->");
@@ -455,7 +504,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_release(const char *path, struct fuse_file_info *fi) {
+    int q_fuse::qfs_release(const char *path, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_release---[{}]--->", path);
         (void) path;
 
@@ -465,7 +514,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_fsync(const char *path, int sync, struct fuse_file_info *fi) {
+    int q_fuse::qfs_fsync(const char *path, int sync, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_fsync---[{}]--->", path);
         ::fsync(fi->fh);
         TRACE("QUBE_FUSE::qfs_fsync---[Leaving]--->");
@@ -473,7 +522,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_setxattr (const char *path, const char *name, const char *val, size_t size, int flags) {
+    int q_fuse::qfs_setxattr (const char *path, const char *name, const char *val, size_t size, int flags) {
         TRACE("QUBE_FUSE::qfs_setxattr---[{}]---[{}]---[{:f}]---[{:f}]-->", *path, *name, *val, size );
 
         TRACE("QUBE_FUSE::qfs_setxattr---[Leaving]--->");
@@ -481,7 +530,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_getxattr (const char *path, const char *name, char *value, size_t size) {
+    int q_fuse::qfs_getxattr (const char *path, const char *name, char *value, size_t size) {
         TRACE("QUBE_FUSE::qfs_getxattr---[{}]---[{}]---[{:d}]>", path, name, size );
         int res = 0;
 
@@ -503,21 +552,21 @@ char* qube_fuse::last_full_path = NULL;
         return res;
     }
 
-    int qube_fuse::qfs_listxattr(const char *path, char *attr, size_t size) {
+    int q_fuse::qfs_listxattr(const char *path, char *attr, size_t size) {
         TRACE("QUBE_FUSE::qfs_listxattr---[{}]---[{}]---[{:d}]--->", *path, *attr, size );
         return 0;
         TRACE("QUBE_FUSE::qfs_listxattr---[Leaving]--->");
         FLUSH;
     }
 
-    int qube_fuse::qfs_removexattr(const char *path, const char *attr) {
+    int q_fuse::qfs_removexattr(const char *path, const char *attr) {
         TRACE("QUBE_FUSE::qfs_removexattr---[{}]---[{}]--->", *path, *attr );
         return 0;
         TRACE("QUBE_FUSE::qfs_removexattr---[Leaving]--->");
         FLUSH;
     }
     
-    int qube_fuse::qfs_opendir(const char *path, struct fuse_file_info *fi) {
+    int q_fuse::qfs_opendir(const char *path, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_opendir---[{}]--->", path);
         DIR *local_fh;
         int res;
@@ -539,7 +588,7 @@ char* qube_fuse::last_full_path = NULL;
         return res;
     }
 
-    int qube_fuse::qfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi, 
+    int q_fuse::qfs_readdir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fi, 
             enum fuse_readdir_flags flags) {
 
         TRACE("QUBE_FUSE::qfs_readdir---[{}]--->", path );
@@ -585,7 +634,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;	
     }
 
-    int qube_fuse::qfs_releasedir(const char *path, struct fuse_file_info *fi) {
+    int q_fuse::qfs_releasedir(const char *path, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_releasedir---[{}]--->", path);
         (void) path;
         if (fi->fh) {
@@ -599,7 +648,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
     
-    int qube_fuse::qfs_fsyncdir(const char *path, int, struct fuse_file_info *fi)
+    int q_fuse::qfs_fsyncdir(const char *path, int, struct fuse_file_info *fi)
     {
         TRACE("QUBE_FUSE::qfs_fsyncdir---[{}]--->", path);
         //::fsyncdir(((DIR *) (uintptr_t)fi->fh);
@@ -608,9 +657,9 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    void qube_fuse::qfs_destroy(void *private_data) { return; }
+    void q_fuse::qfs_destroy(void *private_data) { return; }
     
-    int qube_fuse::qfs_access(const char *path, int i) 
+    int q_fuse::qfs_access(const char *path, int i) 
     {
         TRACE("QUBE_FUSE::qfs_access---[{}]---[{:d}]--->", path, i);
         // Access poses a slight security risk, so user checks should be done when file is opened/modified.
@@ -620,7 +669,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_create(const char *path, mode_t mode, struct fuse_file_info *fi) 
+    int q_fuse::qfs_create(const char *path, mode_t mode, struct fuse_file_info *fi) 
     {
         TRACE("QUBE_FUSE::qfs_create---[{}]---[{:d}]--->", path, mode);
         int res;
@@ -641,7 +690,7 @@ char* qube_fuse::last_full_path = NULL;
         
     }
 
-    int qube_fuse::qfs_lock(const char *path, struct fuse_file_info *fi, int cmd, struct flock *my_lock)
+    int q_fuse::qfs_lock(const char *path, struct fuse_file_info *fi, int cmd, struct flock *my_lock)
     {
         TRACE("QUBE_FUSE::qfs_lock---[{}]---[{:d}]--->", path, cmd);
         //No-op at present. This needs to be filled in once the read/write is working perfectly.
@@ -652,7 +701,7 @@ char* qube_fuse::last_full_path = NULL;
     }
     
     
-    int qube_fuse::qfs_utime(const char *path, const struct timespec *ts, struct fuse_file_info *fi) {
+    int q_fuse::qfs_utime(const char *path, const struct timespec *ts, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_utimens---[{}]--->", path);
         //utime & utimens are no-ops until we can have written files. Then we add to these to modify the file data/time.
         TRACE("QUBE_FUSE::qfs_utimens---[Leaving]--->");
@@ -660,7 +709,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_utimens(const char *path, const struct timespec *ts, struct fuse_file_info *fi) {
+    int q_fuse::qfs_utimens(const char *path, const struct timespec *ts, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_utimens---[{}]--->", path);
 
         TRACE("QUBE_FUSE::qfs_utimens---[Leaving]--->");
@@ -668,7 +717,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_bmap(const char *path, size_t blocksize, uint64_t *idx) {
+    int q_fuse::qfs_bmap(const char *path, size_t blocksize, uint64_t *idx) {
         TRACE("QUBE_FUSE::qfs_bmap---[{}]---[{:d}]---[{:f}]--->", path, blocksize, *idx);
 
         TRACE("QUBE_FUSE::qfs_bmap---[Leaving]--->");
@@ -676,7 +725,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_ioctl(const char *path, int cmd, void *arg, struct fuse_file_info *fi, unsigned int flags,
+    int q_fuse::qfs_ioctl(const char *path, int cmd, void *arg, struct fuse_file_info *fi, unsigned int flags,
         void *data) {
 
         TRACE("QUBE_FUSE::qfs_ioctl---[{}]---[{:d}]---[{}]---[{:d}]---[{}]--->", path, cmd, arg, flags, data );
@@ -686,7 +735,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_poll(const char *path, struct fuse_file_info *fi, struct fuse_pollhandle *ph, 
+    int q_fuse::qfs_poll(const char *path, struct fuse_file_info *fi, struct fuse_pollhandle *ph, 
         unsigned *reventsp) {
 
         TRACE("QUBE_FUSE::qfs_poll---[{}]--->", path );
@@ -696,7 +745,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::qfs_flock(const char *path, struct fuse_file_info *fi, int op) {
+    int q_fuse::qfs_flock(const char *path, struct fuse_file_info *fi, int op) {
         TRACE("QUBE_FUSE::qfs_flock---[{}]---[{:d}]--->", path, op );
 
         TRACE("QUBE_FUSE::qfs_flock---[Leaving]--->");
@@ -704,7 +753,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
     
-    int qube_fuse::qfs_fallocate(const char *path, int i, off_t off1, off_t off2, struct fuse_file_info *fi) {
+    int q_fuse::qfs_fallocate(const char *path, int i, off_t off1, off_t off2, struct fuse_file_info *fi) {
         TRACE("QUBE_FUSE::qfs_fallocate---[{}]---[{:d}]---[{:d}]---[{:d}]--->", path, i, off1, off2 );
 
         TRACE("QUBE_FUSE::qfs_fallocate---[Leaving]--->");
@@ -712,7 +761,7 @@ char* qube_fuse::last_full_path = NULL;
         return 0;
     }
 
-    int qube_fuse::mknod_wrapper(int dirfd, const char *path, const char *link, int mode, dev_t rdev) {
+    int q_fuse::mknod_wrapper(int dirfd, const char *path, const char *link, int mode, dev_t rdev) {
         TRACE("QUBE_FUSE::mknod_wrapper---[{:d}]---[{}]---[{}]---[{:d}]-->",dirfd, *path, link, mode);
         
         int res;
