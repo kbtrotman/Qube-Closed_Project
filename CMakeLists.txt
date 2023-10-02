@@ -11,9 +11,11 @@ enable_testing()
 add_executable(${PROJECT_NAME}   qube.cpp
                                  qube.hpp
                                  q_psql.hpp
+                                 q_psql.cpp
                                  q_fuse.hpp
                                  q_fuse.cpp
                                  q_fs_layer.hpp
+                                 q_fs_layer.cpp
                                  q_convert.hpp
                                  q_convert.cpp
                                  q_dedupe.hpp

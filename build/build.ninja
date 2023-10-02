@@ -98,8 +98,22 @@ build CMakeFiles/QubeFS.dir/qube.cpp.o: CXX_COMPILER__QubeFS_Debug ../qube.cpp |
   OBJECT_DIR = CMakeFiles/QubeFS.dir
   OBJECT_FILE_DIR = CMakeFiles/QubeFS.dir
 
+build CMakeFiles/QubeFS.dir/q_psql.cpp.o: CXX_COMPILER__QubeFS_Debug ../q_psql.cpp || cmake_object_order_depends_target_QubeFS
+  DEP_FILE = CMakeFiles/QubeFS.dir/q_psql.cpp.o.d
+  FLAGS = -g -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors
+  INCLUDES = -I../ -I/usr/include/fuse3 -I/usr/include/spdlog -I/usr/include/pq
+  OBJECT_DIR = CMakeFiles/QubeFS.dir
+  OBJECT_FILE_DIR = CMakeFiles/QubeFS.dir
+
 build CMakeFiles/QubeFS.dir/q_fuse.cpp.o: CXX_COMPILER__QubeFS_Debug ../q_fuse.cpp || cmake_object_order_depends_target_QubeFS
   DEP_FILE = CMakeFiles/QubeFS.dir/q_fuse.cpp.o.d
+  FLAGS = -g -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors
+  INCLUDES = -I../ -I/usr/include/fuse3 -I/usr/include/spdlog -I/usr/include/pq
+  OBJECT_DIR = CMakeFiles/QubeFS.dir
+  OBJECT_FILE_DIR = CMakeFiles/QubeFS.dir
+
+build CMakeFiles/QubeFS.dir/q_fs_layer.cpp.o: CXX_COMPILER__QubeFS_Debug ../q_fs_layer.cpp || cmake_object_order_depends_target_QubeFS
+  DEP_FILE = CMakeFiles/QubeFS.dir/q_fs_layer.cpp.o.d
   FLAGS = -g -Wall -D_FILE_OFFSET_BITS=64 -pedantic-errors
   INCLUDES = -I../ -I/usr/include/fuse3 -I/usr/include/spdlog -I/usr/include/pq
   OBJECT_DIR = CMakeFiles/QubeFS.dir
@@ -134,7 +148,7 @@ build CMakeFiles/QubeFS.dir/q_log.cpp.o: CXX_COMPILER__QubeFS_Debug ../q_log.cpp
 #############################################
 # Link the executable QubeFS
 
-build QubeFS: CXX_EXECUTABLE_LINKER__QubeFS_Debug CMakeFiles/QubeFS.dir/qube.cpp.o CMakeFiles/QubeFS.dir/q_fuse.cpp.o CMakeFiles/QubeFS.dir/q_convert.cpp.o CMakeFiles/QubeFS.dir/q_dedupe.cpp.o CMakeFiles/QubeFS.dir/q_log.cpp.o
+build QubeFS: CXX_EXECUTABLE_LINKER__QubeFS_Debug CMakeFiles/QubeFS.dir/qube.cpp.o CMakeFiles/QubeFS.dir/q_psql.cpp.o CMakeFiles/QubeFS.dir/q_fuse.cpp.o CMakeFiles/QubeFS.dir/q_fs_layer.cpp.o CMakeFiles/QubeFS.dir/q_convert.cpp.o CMakeFiles/QubeFS.dir/q_dedupe.cpp.o CMakeFiles/QubeFS.dir/q_log.cpp.o
   FLAGS = -g
   LINK_FLAGS = -rdynamic
   LINK_LIBRARIES = -lpq  -lcrypto  -lfuse3
