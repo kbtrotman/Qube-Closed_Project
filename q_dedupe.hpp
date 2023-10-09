@@ -20,7 +20,7 @@ class q_dedupe : public q_psql {
 	public:
 
 		q_dedupe (q_log& q) : q_psql(q){
-			TRACE("qube_hash::qube_hash: Hash Init--->");
+			TRACE("q_hash::q_hash: Hash Init--->");
 			FLUSH;
 		}
 		static std::string get_sha512_hash(const std::vector<uint8_t> v_str);

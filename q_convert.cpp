@@ -7,9 +7,11 @@
  *
  */
 
+
 #include "q_convert.hpp"
 
-    std::shared_ptr<spdlog::logger> _Qlog = nullptr;
+std::shared_ptr<spdlog::logger> q_convert::_Qlog = nullptr;
+extern Settings settings;
 
     q_convert::q_convert(q_log& q) {
         q_convert::_Qlog = q.get_log_instance();

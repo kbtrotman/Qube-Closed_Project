@@ -18,6 +18,7 @@
 #include <sys/xattr.h>
 #endif
 
+#include "qube.hpp"
 #include "q_fs_layer.hpp"
 #include "q_dedupe.hpp"
 #include "q_log.hpp"

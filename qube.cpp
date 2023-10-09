@@ -10,17 +10,17 @@
 // Globals:  Private Defs, Then Classes
 #include "qube.hpp"
 #include "q_log.hpp"
-    q_log& QLOG = q_log::getInstance();
-	static std::shared_ptr<spdlog::logger> _Qlog = QLOG.get_log_instance();
 #include "q_fuse.hpp"
 
-
+Settings settings;
 // Define all the static variables that need to always be available.
 
 // Main entry
 int main( int argc, char *argv[] )
 {
+	q_log& QLOG = q_log::getInstance();
 	static std::shared_ptr<spdlog::logger> _Qlog = QLOG.get_log_instance();
+	
 	q_fuse qf(QLOG);
 
 	INFO("====================================");

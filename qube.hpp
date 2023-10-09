@@ -43,7 +43,8 @@
 // & Constants
 //#############################
 #define BLOCK_SIZE 4096
-#define HASH_SIZE 128   // The hexidecimal hash size is twice as long as the 64-char key (512-bit key).
+#define HASH_SIZE 128   // The key we generate is 512 bits long. We can reduce that to 128 chars hex or 64 char string. Hex is best. Longer but better.
+                        // So, here for each 4096 block that's identical, we will reduce to 128 hex chars.
 
 #define NO_HASH_S "NO_ENC_HASHES_RETURNED"
 
@@ -89,10 +90,10 @@ struct UserMap {
 // SETTINGS & Config stuff
 //############################
 
-static struct Settings {
+struct Settings {
     const char *progname;
-    std::string *root_dir;
-    char *mount_point;  //Mount point is really the same as root_dir?? Is this redundant, or can they be different?
+    std::string *root_dir;  //Source dir of the actual data
+    char *mount_point;     // Where it's mounted to
     int src_len;
     int mnt_len; /* caches strlen(mntdest) */
     int src_fd;
@@ -110,5 +111,5 @@ static struct Settings {
     uid_t uid_offset;
     gid_t gid_offset;
 
-} settings;
+};
   
