@@ -33,7 +33,6 @@ class q_psql : public q_convert {
         static int qpsql_insert_hash(std::string hash, std::vector<uint8_t> *data_block);
 		static int qpsql_incr_hash_count(std::string hash);
 		static PGresult* qpsql_decr_hash_count(std::string hash);
-		static PGresult* qpsql_execInsert(std::string qube_query);
 		static void qpsql_release_query ();
 		static void qpsql_do_exit(int ex);
 

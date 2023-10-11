@@ -32,7 +32,7 @@ const char *q_psql::use_decr = "";
         TRACE("Psql Init------>");
 
         qu_sql = "SELECT block, use_count FROM hashes WHERE hash = %s";
-        ins_sql = "INSERT INTO hashes VALUES (%s, %s, %d)";
+        ins_sql = "INSERT INTO hashes VALUES (%s, $1, %d)";
         use_incr = "UPDATE hashes set use_count = use_count + 1 WHERE hash = %s";
         use_decr = "UPDATE hashes set use_count = use_count - 1 WHERE hash = %s";
 
@@ -89,31 +89,41 @@ const char *q_psql::use_decr = "";
 
     int q_psql::qpsql_insert_hash(std::string hash, std::vector<uint8_t> *data_block) {
         //INSERT a hash into the DB....
-        TRACE("Q_PSQL::qpsql_insert_hash---hash: {}---block: {}--->", hash, (char*)data_block->data());
+        TRACE("Q_PSQL::qpsql_insert_hash---hash: {}---block: {:x}--->", hash, (char *)data_block->data());
 
         quoted_hash = qpsql_get_quoted_value(hash);
-        quoted_block = qpsql_get_quoted_value(data_block);
-        //quoted_count = qpsql_get_quoted_value("1");
-        char *quoted_sql = (char *) malloc(strlen(ins_sql) + quoted_hash.length() + quoted_block.length() + quoted_count.length() + 1);
+        //quoted_block = qpsql_get_quoted_value(data_block);
+   
+        const char *paramValues[1];
+        int paramLengths[1];
+        int paramFormats[1];
+        // Assign the binary data to the parameter
+        paramValues[0] = reinterpret_cast<const char *>(data_block->data());
+        paramLengths[0] = data_block->size();
+        paramFormats[0] = 1; // 1 means binary format
+        
+        char *quoted_sql = (char *) malloc(strlen(ins_sql) + quoted_hash.length() + quoted_count.length() + 1);
         std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), quoted_block.c_str(), 1 );
-        std::string tmp_sql(quoted_sql);
-        int res;
+        //std::string tmp_sql(quoted_sql);
+        PGresult *res;
+        int rows;
         FLUSH;
 
-        DEBUG("Q_PSQL::qpsql_insert_hash: INSERT QUERY = {}", tmp_sql);
-        last_ins = qpsql_execInsert(tmp_sql);
-        if (PQresultStatus(last_ins) != PGRES_COMMAND_OK) {
-            res = 0;
-            CRITICAL("Q_PSQL::qpsql_insert_hash: Data insert failed into DB. query = {}", tmp_sql);
+        DEBUG("Q_PSQL::qpsql_insert_hash: INSERT QUERY = {}", quoted_sql);
+        res = PQexecParams(conn, quoted_sql, 1, nullptr, paramValues, paramLengths, paramFormats, 0);
+
+        if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+            rows = 0;
+            CRITICAL("Q_PSQL::qpsql_insert_hash: Data insert failed into DB. query = {}", quoted_sql);
         } else {
             char *tuples = PQcmdTuples(last_ins);
-            res = atoi(tuples);
-            DEBUG("Q_PSQL::qpsql_insert_hash: {:d} rows inserted into DB. query = {}", res, tmp_sql);
+            rows = atoi(tuples);
+            DEBUG("Q_PSQL::qpsql_insert_hash: {:d} rows inserted into DB. query = {}", rows, quoted_sql);
         }
 
-        TRACE("Q_PSQL::qpsql_insert_hash: ---[Leaving]---with rows inserted: {:d}--->", res);
+        TRACE("Q_PSQL::qpsql_insert_hash: ---[Leaving]---with rows inserted: {:d}--->", rows);
         FLUSH;
-        return res;
+        return rows;
     }
 
     int q_psql::qpsql_incr_hash_count(std::string hash) {
@@ -142,21 +152,6 @@ const char *q_psql::use_decr = "";
         res = qpsql_execQuery(quoted_sql);
 
         TRACE("Q_PSQL::qpsql_incr_hash_count---[Leaving]---with record count: {:d}--->", q_psql::rec_count);
-        FLUSH;
-        return res;
-    }
-
-    PGresult* q_psql::qpsql_execInsert(std::string qube_query) {
-        /* Create SQL statement */
-        TRACE("Q_PSQL::qpsql_execInsert---qube_query {}--->", qube_query);
-        DEBUG(qube_query);
-        PGresult *res;
-
-        res = PQexec(conn, qube_query.c_str());
-        if (PQresultStatus(res) != PGRES_COMMAND_OK) {
-            ERROR("Q_PSQL::qpsql_execInsert: INSERT failed from the SQL Query just posted. SQL Return Error message: {}", PQerrorMessage(conn));
-        }
-        TRACE("Q_PSQL::qpsql_execInsert:---[Leaving]--->");
         FLUSH;
         return res;
     }
@@ -200,57 +195,63 @@ const char *q_psql::use_decr = "";
         return tmp_quote;
     }
 
+/***          NOT NEEDED FOR BINARY DATA, USE PREPARED STATEMENT INSTEAD.         ***
+ * 
     std::string q_psql::qpsql_get_quoted_value(std::vector<uint8_t> *in_vec) {
-        TRACE("Q_FUSE::qpsql_get_unquoted_value---binary instr: {}--->", (char*)in_vec->data());
-        FLUSH;
-        char *escaped_val = PQescapeLiteral(conn, ((const char*)q_convert::vect2char(in_vec)), in_vec->size());
+        TRACE("Q_PSQL::qpsql_get_quoted_value---binary instr: {:x}--->", in_vec->data());
+
+        char *escaped_val = PQescapeLiteral(conn, q_convert::vect2char(in_vec), in_vec->size());
+        DEBUG("Q_PSQL::qpsql_get_quoted_value: escaped_value={}", escaped_val);
 
         if (escaped_val == NULL) {
             ERROR("Q_PSQL::qpsql_get_quoted_value: Failed to escape a value: {} with connection {:d}.", (char*)in_vec->data(),PQerrorMessage(conn));
-            qpsql_do_exit(4);
+            FLUSH;
+            return NULL;
+        } else {
+            std::string tmp_quote(escaped_val);
+            PQfreemem(escaped_val);
+            TRACE("Q_PSQL::qpsql_get_quoted_value---[Leaving]---with quoted string: {}--->", tmp_quote);
+            FLUSH;
+            return tmp_quote;
         }
-        std::string tmp_quote(escaped_val);
-        PQfreemem(escaped_val);
-        TRACE("Q_PSQL::qpsql_get_quoted_value---[Leaving]---with quoted string: {}--->", tmp_quote);
-        FLUSH;
-        return tmp_quote;
     }
+***/
 
     std::string q_psql::qpsql_get_unquoted_value(char *in_string) {
-        TRACE("Q_FUSE::qpsql_get_unquoted_value---binary instr: {}--->", in_string);
+        TRACE("Q_PSQL::qpsql_get_unquoted_value---binary instr: {}--->", in_string);
         char *escaped_binary_field = in_string;
         size_t escaped_binary_field_size = PQgetlength(last_res, 0, 0);
         char *binary_field = reinterpret_cast<char *>(PQunescapeBytea((const unsigned char *)escaped_binary_field, &escaped_binary_field_size));
         if (!binary_field) {
-            ERROR("Q_FUSE::qpsql_get_unquoted_value: Failed to unescape binary data: {}", PQerrorMessage(conn));
+            ERROR("Q_PSQL::qpsql_get_unquoted_value: Failed to unescape binary data: {}", PQerrorMessage(conn));
             FLUSH;
             return "";
         }else {
-            DEBUG("Q_FUSE::qpsql_get_unquoted_value: unescaped string value = {}", binary_field);
+            DEBUG("Q_PSQL::qpsql_get_unquoted_value: unescaped string value = {}", binary_field);
             std::string tmp_field(binary_field);
             PQfreemem(binary_field);
-            TRACE("Q_FUSE::qpsql_get_unquoted_value---[Leaving]---with binary data string: {}--->", tmp_field);
+            TRACE("Q_PSQL::qpsql_get_unquoted_value---[Leaving]---with binary data string: {}--->", tmp_field);
             FLUSH;
             return tmp_field;
         }
     }
 
     std::vector<uint8_t> q_psql::qpsql_get_unquoted_value(std::vector<uint8_t> *in_vec) {
-        TRACE("Q_FUSE::qpsql_get_unquoted_value---binary instr: {}--->", (char*)in_vec->data());
-        const unsigned char *escaped_binary_field = q_convert::vect2char(in_vec);
+        TRACE("Q_PSQL::qpsql_get_unquoted_value---binary instr: {}--->", (char*)in_vec->data());
+        const unsigned char *escaped_binary_field = q_convert::vect2uchar(in_vec);
         size_t escaped_binary_field_size = in_vec->size();
         unsigned char *binary_field = PQunescapeBytea(escaped_binary_field, &escaped_binary_field_size);
         std::vector<uint8_t> ret_binary;
 
         if (!binary_field) {
-            ERROR("Q_FUSE::qpsql_get_unquoted_value: Failed to unescape binary data: {}", PQerrorMessage(conn));
+            ERROR("Q_PSQL::qpsql_get_unquoted_value: Failed to unescape binary data: {}", PQerrorMessage(conn));
             FLUSH;
             return ret_binary;
         }else {
-            DEBUG("Q_FUSE::qpsql_get_unquoted_value: unescaped string value = {}", (char*)binary_field);
+            DEBUG("Q_PSQL::qpsql_get_unquoted_value: unescaped string value = {}", (char*)binary_field);
             ret_binary = q_convert::char2vect(binary_field);
             PQfreemem(binary_field);
-            TRACE("Q_FUSE::qpsql_get_unquoted_value---[Leaving]---with binary data string: {}--->", (char*)ret_binary.data());
+            TRACE("Q_PSQL::qpsql_get_unquoted_value---[Leaving]---with binary data string: {}--->", (char*)ret_binary.data());
             FLUSH;
             return ret_binary;
         }

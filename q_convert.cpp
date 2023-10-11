@@ -26,12 +26,28 @@ extern Settings settings;
         return str->c_str();
     }
 
-    const unsigned char *q_convert::vect2char (std::vector<uint8_t> *vec) {
+    const unsigned char *q_convert::vect2uchar (std::vector<uint8_t> *vec) {
         const unsigned char *str( vec->data() );
         return str;
     }
 
-    std::vector<uint8_t> q_convert::char2vect(const unsigned char* str) {
+    const char *q_convert::vect2char (const std::vector<uint8_t> *vec) {
+        if (vec == nullptr) {
+            return nullptr; // Handle null pointer case if necessary
+        }
+        char* cstring = new char[vec->size() + 1];
+
+        // Copy the data from the vector to the char array
+        for (size_t i = 0; i < vec->size(); ++i) {
+            cstring[i] = static_cast<char>((*vec)[i]);
+        }
+        cstring[vec->size()] = '\0';
+        DEBUG("q_convert::vect2char: Converted a vector to: {}", cstring);
+        // Return a C-style string
+        return cstring;
+    }
+
+    std::vector<uint8_t> q_convert::char2vect(const unsigned char *str) {
         std::vector<uint8_t> tmp_vect;
         size_t length = sizeof(str);
 

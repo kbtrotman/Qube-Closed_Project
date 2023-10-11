@@ -67,11 +67,11 @@ extern Settings settings;
 
     int q_FS::qfs_write_to_file( int fd, const char *data_content, size_t size, off_t offset ) {
         TRACE("Q_FS::qfs_Write_to_file---[{:d}]---[{}]---[{:d}]>", fd, data_content, size);
-        // Here we are writing only the hashes to the actual filesystem. Data blocks that are normally
-        // in a filesystem are written into the DB via the qpsql class.
+        // Here we are writing only the hashes to the actual filesystem.
         int write_result;
 
         //Seek to our writing offset point before doing anythign else
+        DEBUG("Q_FS::qfs_Write_to_file: seeking to offset---[{:d}]--->", offset);
         ::lseek(fd, offset, SEEK_SET);
 
         // write deduplicated data to the file, IE: we're writing hashes only here to the local FS.
