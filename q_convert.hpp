@@ -22,7 +22,7 @@ class q_convert {
         static const char *string2char (std::string *str);
         static const unsigned char *vect2uchar (std::vector<uint8_t> *vec);
         static const char *vect2char (const std::vector<uint8_t> *vec);
-        static std::vector<uint8_t> char2vect(const unsigned char *str);
+        template <typename T> static std::vector<uint8_t> char2vect(T* str, size_t length);
         static std::vector<uint8_t> string2vect (std::string *str);
         static std::string vect2string(const std::vector<uint8_t>& vec);
         static std::vector<uint8_t> substr_of_char(const char *str, int start, int end);

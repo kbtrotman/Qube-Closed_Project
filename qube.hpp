@@ -33,6 +33,7 @@
 #include <string>
 #include <iostream>
 #include <cstdio>
+#include <cstdint>
 #include <chrono>
 #include <sstream>
 #include <iomanip>

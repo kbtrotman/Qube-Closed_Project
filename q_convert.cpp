@@ -47,16 +47,18 @@ extern Settings settings;
         return cstring;
     }
 
-    std::vector<uint8_t> q_convert::char2vect(const unsigned char *str) {
+    template <typename T> std::vector<uint8_t> q_convert::char2vect(T* str, size_t length) {
         std::vector<uint8_t> tmp_vect;
-        size_t length = sizeof(str);
-
+    
         for (size_t i = 0; i < length; ++i) {
             tmp_vect.push_back(static_cast<uint8_t>(str[i]));
         }
 
         return tmp_vect;
     }
+    // Explicit instantiation for the types we expect to use here.
+    template std::vector<uint8_t> q_convert::char2vect(char* str, size_t length);
+    template std::vector<uint8_t> q_convert::char2vect(unsigned char* str, size_t length);
 
     std::vector<uint8_t> q_convert::string2vect (std::string *str) {
         std::vector<uint8_t> tmp_vect;

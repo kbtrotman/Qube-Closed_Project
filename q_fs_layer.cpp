@@ -66,15 +66,13 @@ extern Settings settings;
     }
 
     int q_FS::qfs_write_to_file( int fd, const char *data_content, size_t size, off_t offset ) {
-        TRACE("Q_FS::qfs_Write_to_file---[{:d}]---[{}]---[{:d}]>", fd, data_content, size);
+        TRACE("Q_FS::qfs_Write_to_file---[{:d}]---[{}]---[{:d}]>", fd, data_content, size, offset);
         // Here we are writing only the hashes to the actual filesystem.
         int write_result;
 
         //Seek to our writing offset point before doing anythign else
-        DEBUG("Q_FS::qfs_Write_to_file: seeking to offset---[{:d}]--->", offset);
-        ::lseek(fd, offset, SEEK_SET);
+        //::lseek(fd, offset, SEEK_SET);
 
-        // write deduplicated data to the file, IE: we're writing hashes only here to the local FS.
         write_result = ::pwrite(fd, data_content, size, offset);
         if (write_result == -1) {
             DEBUG("Q_FS::qfs_Write_to_file: error writing to filehandle---[{:d}]--->", fd);
@@ -82,7 +80,6 @@ extern Settings settings;
             DEBUG("Q_FS::qfs_Write_to_file: wrote {} bytes to filehandle {:d} at offset {}, total now written = {} bytes.", size, fd, offset, write_result);
         }
 
-        ::close(fd);
         TRACE("Q_FS::qfs_write_to_file:---[Leaving]--->");
         FLUSH;
         return write_result;

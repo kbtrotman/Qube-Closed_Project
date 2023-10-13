@@ -369,7 +369,7 @@ extern Settings settings;
         DEBUG("Q_FUSE:qfs_read: seeked to offset {:d} in file handle {:d} to read size {:d}.", offset, fd, size);
 
         for (int i=0; i < num_of_hashes; i++) {
-
+            DEBUG("Interation thru loop: {}, fd {}, tmpbuffer {}, offset + (i * HASHSIZE) {}", i, fd, tmpbuffer, ( offset + (i * HASH_SIZE )));
             res = pread(fd, tmpbuffer, HASH_SIZE, offset + (i * HASH_SIZE));
             if (res == -1) {
                 ERROR("Q_FUSE:qfs_read: error reading from provided file handle {:d}.", fd);
@@ -380,16 +380,28 @@ extern Settings settings;
             DEBUG("Q_FUSE:qfs_read: read {} bytes into temp buffer from filehandle {:d}, # of hashes {:d}.", strlen(tmpbuffer), fd, (strlen(tmpbuffer) / HASH_SIZE));
         
             std::string read_buffer(tmpbuffer);
-            block_hash = read_buffer.substr((i * HASH_SIZE), ((i + 1) * HASH_SIZE));
+            block_hash = read_buffer.substr((i * HASH_SIZE), HASH_SIZE);
             tmp_block = qpsql_get_block_from_hash(block_hash);
+            DEBUG("Q_FUSE:qfs_read: tmp_block size: {}>>> actual_contents size: {}", tmp_block.size(), actual_contents.size());
+            FLUSH;
             actual_contents.insert(actual_contents.end(), tmp_block.begin(), tmp_block.end());
+            DEBUG("Q_FUSE:qfs_read: tmp_block size: {}>>> actual_contents size: {}", tmp_block.size(), actual_contents.size());
+            FLUSH;
+            memset(tmpbuffer, 0, sizeof(tmpbuffer));
         }
 
         size = original_size;
         offset = original_offset;
-        DEBUG("Q_FUSE:qfs_read: data read to buffer with filehandle {:d}, data is: {}.", fd, (char*)actual_contents.data());
-
-        memcpy(buffer, actual_contents.data(), actual_contents.size());
+        DEBUG("Q_FUSE:qfs_read: data read to buffer with filehandle {:d}, actual data size is: {} and tmp size was {}.", fd, actual_contents.size(), tmp_block.size());
+        FLUSH;
+        if (sizeof(buffer) >= actual_contents.size()) {
+            memcpy(buffer, actual_contents.data(), actual_contents.size());
+            return actual_contents.size();
+        } else {
+            // Handle buffer too small error
+            // ...
+            CRITICAL("READ BUFFER is too small for the amount of data returned in the 4096 block size! This should never happen as it causes a system error if I fill the buffer of that size and filesystem will abort hard!");
+        }
         TRACE("Q_FUSE::qfs_read---[Leaving]--->");
         FLUSH;
         return actual_contents.size();
