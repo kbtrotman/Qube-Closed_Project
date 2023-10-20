@@ -354,7 +354,6 @@ extern Settings settings;
         int original_offset;
         int original_size;
         char tmpbuffer[HASH_SIZE];
-        std::string block_hash;
         std::vector<uint8_t> tmp_block;
         std::vector<uint8_t> actual_contents;
 
@@ -364,12 +363,14 @@ extern Settings settings;
         // Change our hashes in the file into blocks from the DB....
         original_offset = offset;
         original_size = size;
-        offset = (original_offset / 4096) + (original_offset % 4096);
+        offset = (original_offset / 4096) * (HASH_SIZE));
         ::lseek(fd, offset, SEEK_SET);
-        DEBUG("Q_FUSE:qfs_read: seeked to offset {:d} in file handle {:d} to read size {:d}.", offset, fd, size);
+        
 
         for (int i=0; i < num_of_hashes; i++) {
             DEBUG("Interation thru loop: {}, fd {}, tmpbuffer {}, offset + (i * HASHSIZE) {}", i, fd, tmpbuffer, ( offset + (i * HASH_SIZE )));
+            FLUSH;
+
             res = pread(fd, tmpbuffer, HASH_SIZE, offset + (i * HASH_SIZE));
             if (res == -1) {
                 ERROR("Q_FUSE:qfs_read: error reading from provided file handle {:d}.", fd);
@@ -378,10 +379,8 @@ extern Settings settings;
             }
 
             DEBUG("Q_FUSE:qfs_read: read {} bytes into temp buffer from filehandle {:d}, # of hashes {:d}.", strlen(tmpbuffer), fd, (strlen(tmpbuffer) / HASH_SIZE));
-        
-            std::string read_buffer(tmpbuffer);
-            block_hash = read_buffer.substr((i * HASH_SIZE), HASH_SIZE);
-            tmp_block = qpsql_get_block_from_hash(block_hash);
+            FLUSH;
+            tmp_block = qpsql_get_block_from_hash(tmpbuffer);
             DEBUG("Q_FUSE:qfs_read: tmp_block size: {}>>> actual_contents size: {}", tmp_block.size(), actual_contents.size());
             FLUSH;
             actual_contents.insert(actual_contents.end(), tmp_block.begin(), tmp_block.end());
@@ -392,7 +391,7 @@ extern Settings settings;
 
         size = original_size;
         offset = original_offset;
-        DEBUG("Q_FUSE:qfs_read: data read to buffer with filehandle {:d}, actual data size is: {} and tmp size was {}.", fd, actual_contents.size(), tmp_block.size());
+        DEBUG("Q_FUSE:qfs_read: data read to buffer with filehandle {:d}, actual data size is: {}, writing to buffer size {}.", fd, actual_contents.size(), sizeof(buffer));
         FLUSH;
         if (sizeof(buffer) >= actual_contents.size()) {
             memcpy(buffer, actual_contents.data(), actual_contents.size());
@@ -410,7 +409,7 @@ extern Settings settings;
     int q_fuse::qfs_write( const char *path, const char *buf, size_t size, off_t offset, 
         struct fuse_file_info *info ) {
 
-        TRACE("Q_FUSE::qfs_write---[{}]---[{}]-->", path, buf);
+        TRACE("Q_FUSE::qfs_write---[{}]---[{}]---size={}--->", path, buf, size);
         double original_offset;
         std::string block_hash;
         std::string hash_buffer;
@@ -423,23 +422,37 @@ extern Settings settings;
             DEBUG("Q_FUSE::qfs_write: Exiting qfs_write with no data to write to disk/DB: '{:d}'.", buf);
             res = 0;
         } else {
-            DEBUG("Q_FUSE::qfs_Write: Incoming full path: {}---buffer: {}--- and buffer length: {}--->", last_full_path, buf, sizeof(buf));
+            DEBUG("Q_FUSE::qfs_Write: Incoming full path: {}---buffer: {}--- and buffer length: {}--->", last_full_path, buf, size);
             original_offset = offset;
             FLUSH;
             //# Generate the test hashes
             //###########################
-            offset = (offset * HASH_SIZE) / BLOCK_SIZE;
-            int fracBuffers = sizeof(buf) % BLOCK_SIZE; //Most algs use ceiling, but Ceiling ignores very small fractions.
-            int numBuffers = sizeof(buf) / BLOCK_SIZE;	 								          
+            offset = (offset / BLOCK_SIZE) * HASH_SIZE; //Convert from the size of block to the size of Hash.
+            int fracBuffers = size % BLOCK_SIZE;        //Ceiling ignores very small fractions.
+            int numBuffers = size / BLOCK_SIZE;	 								          
                                                                 
-            if (fracBuffers > 0) {numBuffers++;}             // If we have extra data, then we need to add a buffer frame to store it.
-            DEBUG("Q_FUSE::qfs_write: There are {:d} buffers in the data stream, including {:d} bytes in a fractional buffer.", numBuffers, fracBuffers);
+            if (fracBuffers > 0) {numBuffers++;}        // If we have extra data, then we need to add a buffer frame to store it.
+            DEBUG("Q_FUSE::qfs_write: There are {:d} buffers in the data stream, including {:d} bytes in a fractional buffer with offset = {}.", numBuffers, fracBuffers, offset);
 
             for (int i=0; i < numBuffers; i++) {
                 DEBUG("Q_FUSE::qfs_write: # of Times through hash loop: {:d} ",i);
-                cur_block = q_convert::substr_of_char(buf, i * BLOCK_SIZE, (i + 1) * BLOCK_SIZE);
-                block_hash = q_dedupe::get_sha512_hash(cur_block);			
+                cur_block = q_convert::substr_of_char(buf, i * BLOCK_SIZE + 1, ((i + 1) * BLOCK_SIZE) - 1);
+                block_hash = q_dedupe::get_sha512_hash(cur_block);		//<------------Hash we get here keeps repeating. New Bug.
+
+
+
+
+
+
+
+
+
+
                 
+                	
+            //# END: Generate the test hashes
+            //###############################
+
                 DEBUG("Q_FUSE::qfs_write: Hash that was generated: {}", block_hash);
                 hash_buffer += block_hash;
                 DEBUG("Q_FUSE::qfs_write: Appended hash: {} to hash_buffer: {}.", block_hash, hash_buffer);
@@ -457,7 +470,6 @@ extern Settings settings;
                 } else {
                     // Handle Collisions: Hash does exist, check if the data block in the DB is the same...
                     if ( ! (cur_block == block_in_DB) ) {
-                        // Then we have a hard collision. Let's deal with it.
                         ERROR("Q_FUSE::qfs_write: Hash Colission! Hard Error. Saving data and working around the problem.");
 
                         //TODO: We don't allow collisions in this FS, so we deal with the error in a way that makes sense.
@@ -466,7 +478,9 @@ extern Settings settings;
                         // we want to at the least, log the event and note it. Also, we want to save the file in a way its
                         // recoverable. There are several ways we can do this. But its not important at this moment.
                         //***********************************************************************************************
-                        
+                        //    1. Save a copy of the full file in an admin dir.
+                        //    2. List all data about hashes and blocks in a text file in the same dir.
+                        //    3. Log the time, date, and relavant info.
                     }
 
                     // If no collisions, then increment the use count and statistics.

@@ -75,7 +75,7 @@ extern Settings settings;
         // Create a new vector as a substring of the original vector
         std::vector<uint8_t> substringVector;
 
-        for (int i = 0; i < (end - start); ++i) {
+        for (int i = start; i < (end - start); ++i) {
             substringVector.push_back( str[i] );
         }
         return substringVector;

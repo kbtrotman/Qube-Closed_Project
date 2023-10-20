@@ -105,22 +105,23 @@ const char *q_psql::use_decr = "";
         int rows;
         
         char *quoted_sql = (char *) malloc(strlen(ins_sql) + quoted_hash.length() + quoted_count.length() + 1);
-        std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), quoted_block.c_str(), 1 );
+        std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), "1" );
 
         DEBUG("Q_PSQL::qpsql_insert_hash: INSERT QUERY = {}", quoted_sql);
         res = PQexecParams(conn, quoted_sql, 1, nullptr, paramValues, paramLengths, paramFormats, 0);
 
-        if (PQresultStatus(res) != PGRES_COMMAND_OK) {
+       if (PQresultStatus(res) != PGRES_COMMAND_OK) {
             rows = 0;
             CRITICAL("Q_PSQL::qpsql_insert_hash: Data insert failed into DB. query = {}", quoted_sql);
         } else {
-            char *tuples = PQcmdTuples(last_ins);
-            rows = atoi(tuples);
+            rows = atoi(PQcmdTuples(res));
             DEBUG("Q_PSQL::qpsql_insert_hash: {:d} rows inserted into DB. query = {}", rows, quoted_sql);
+            last_res = res;
         }
 
         TRACE("Q_PSQL::qpsql_insert_hash: ---[Leaving]---with rows inserted: {:d}--->", rows);
         FLUSH;
+        PQclear(res);
         return rows;
     }
 
