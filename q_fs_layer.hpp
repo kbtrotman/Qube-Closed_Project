@@ -30,9 +30,12 @@ class q_FS {
         static char* qfs_get_root_path(const char* path);
 		static int qfs_write_to_file( int fd, const char *data_content, size_t size, off_t offset );
         static int qfs_compare_existing_hashes(std::string *new_hashes);       
+        static std::vector<uint8_t> get_a_block_from_buffer( std::vector<uint8_t> in_buffer, int block_num );
+        static int handle_a_collision( );
+
 
     private:
         static std::shared_ptr<spdlog::logger> _Qflog;
-
+        static std::vector<uint8_t> cur_block;     
 };
 

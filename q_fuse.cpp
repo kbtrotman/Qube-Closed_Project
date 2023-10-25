@@ -363,7 +363,7 @@ extern Settings settings;
         // Change our hashes in the file into blocks from the DB....
         original_offset = offset;
         original_size = size;
-        offset = (original_offset / 4096) * (HASH_SIZE));
+        offset = ((original_offset / 4096) * (HASH_SIZE));
         ::lseek(fd, offset, SEEK_SET);
         
 
@@ -387,6 +387,7 @@ extern Settings settings;
             DEBUG("Q_FUSE:qfs_read: tmp_block size: {}>>> actual_contents size: {}", tmp_block.size(), actual_contents.size());
             FLUSH;
             memset(tmpbuffer, 0, sizeof(tmpbuffer));
+            tmp_block.clear();
         }
 
         size = original_size;
@@ -406,90 +407,64 @@ extern Settings settings;
         return actual_contents.size();
     }
 
-    int q_fuse::qfs_write( const char *path, const char *buf, size_t size, off_t offset, 
-        struct fuse_file_info *info ) {
-
-        TRACE("Q_FUSE::qfs_write---[{}]---[{}]---size={}--->", path, buf, size);
+    int q_fuse::qfs_write( const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *info ) {
+        TRACE("Q_FUSE::qfs_write---[{}]---[{:h}]---[size={:d}]--->", path, buf, size);
         double original_offset;
         std::string block_hash;
         std::string hash_buffer;
-        std::vector<uint8_t> cur_block;
+        std::vector<uint8_t> in_buffer;
+        in_buffer = q_convert::char2vect(buf, size);    
         int res;
-
-        FLUSH;
+        original_offset = offset;
+        offset = (offset / BLOCK_SIZE) * HASH_SIZE; //Convert from the size of block to the size of Hash.
+        int fracBuffers = size % BLOCK_SIZE;        //Ceiling ignores very small fractions.
+        int numBuffers = size / BLOCK_SIZE;
+        if (fracBuffers > 0) {numBuffers++;}        // If we have extra data, then we need to add a buffer frame to store it.
 
         if ( *buf == '\0' ) {
-            DEBUG("Q_FUSE::qfs_write: Exiting qfs_write with no data to write to disk/DB: '{:d}'.", buf);
+            WARN("Q_FUSE::qfs_write: Exiting qfs_write with no data to write to disk/DB: '{:d}'.", buf);
             res = 0;
         } else {
-            DEBUG("Q_FUSE::qfs_Write: Incoming full path: {}---buffer: {}--- and buffer length: {}--->", last_full_path, buf, size);
-            original_offset = offset;
-            FLUSH;
-            //# Generate the test hashes
-            //###########################
-            offset = (offset / BLOCK_SIZE) * HASH_SIZE; //Convert from the size of block to the size of Hash.
-            int fracBuffers = size % BLOCK_SIZE;        //Ceiling ignores very small fractions.
-            int numBuffers = size / BLOCK_SIZE;	 								          
-                                                                
-            if (fracBuffers > 0) {numBuffers++;}        // If we have extra data, then we need to add a buffer frame to store it.
-            DEBUG("Q_FUSE::qfs_write: There are {:d} buffers in the data stream, including {:d} bytes in a fractional buffer with offset = {}.", numBuffers, fracBuffers, offset);
+            //# Generate the hash
+            //#####################                                                        
+            DEBUG("Q_FUSE::qfs_write: There are {:d} buffers in the data stream, including {:d} bytes in a fractional buffer with offset = {:d}.", numBuffers, fracBuffers, offset);
+            DEBUG("Q_FUSE::qfs_Write: Incoming full path: {}---buffer: {:o}--- and buffer length: {}--->", last_full_path, (char *)in_buffer.data(), size);
 
-            for (int i=0; i < numBuffers; i++) {
-                DEBUG("Q_FUSE::qfs_write: # of Times through hash loop: {:d} ",i);
-                cur_block = q_convert::substr_of_char(buf, i * BLOCK_SIZE + 1, ((i + 1) * BLOCK_SIZE) - 1);
-                block_hash = q_dedupe::get_sha512_hash(cur_block);		//<------------Hash we get here keeps repeating. New Bug.
+            for (int i=0; i < (numBuffers); i++) {
+                std::vector<uint8_t> data_block;
+                data_block = q_FS::get_a_block_from_buffer(in_buffer, i);
+                block_hash.clear();
+                block_hash = q_dedupe::get_sha512_hash(data_block);
+                //# END: Generate the hash
 
-
-
-
-
-
-
-
-
-
-                
-                	
-            //# END: Generate the test hashes
-            //###############################
-
-                DEBUG("Q_FUSE::qfs_write: Hash that was generated: {}", block_hash);
+                DEBUG("Q_FUSE::qfs_write: ----Hash that was generated: {}------------------>", block_hash);
                 hash_buffer += block_hash;
                 DEBUG("Q_FUSE::qfs_write: Appended hash: {} to hash_buffer: {}.", block_hash, hash_buffer);
-                //# Check if the hash exists
-                //##########################
+                //# Check if the hash exists in DB
+                //#################################
 
                 std::vector<uint8_t> block_in_DB(qpsql_get_block_from_hash(block_hash));
-                FLUSH;
                 if ( q_psql::rec_count == 0 ) {
                     //hash doesn't exist, save it...
                     int ins_rows = 0;
-                    ins_rows = qpsql_insert_hash(block_hash, &cur_block);
-                    DEBUG("Q_FUSE::qfs_write: Saved to DB: hash: {} Block: {} in {:d} rows.", block_hash, (char*)cur_block.data(), ins_rows);
-                    if ( ins_rows < 1 ) {ERROR("Q_FUSE::qfs_write: data was not saved to the DB, rows = {:d}}!", ins_rows);}
+                    ins_rows = qpsql_insert_hash(block_hash, &data_block);
+                    DEBUG("Q_FUSE::qfs_write: Saved to DB: hash: {} Block size: {:d} in {:d} rows.", block_hash, data_block.size(), ins_rows);
+                    if ( ins_rows < 1 ) {
+                        ERROR("Q_FUSE::qfs_write: data was not saved to the DB, rows = {:d}}!", ins_rows);
+                    }
                 } else {
                     // Handle Collisions: Hash does exist, check if the data block in the DB is the same...
-                    if ( ! (cur_block == block_in_DB) ) {
-                        ERROR("Q_FUSE::qfs_write: Hash Colission! Hard Error. Saving data and working around the problem.");
-
-                        //TODO: We don't allow collisions in this FS, so we deal with the error in a way that makes sense.
-                        //***********************************************************************************************
-                        // Most de-dupe platforms realize that a collision is less likely than filesystem corruption, but
-                        // we want to at the least, log the event and note it. Also, we want to save the file in a way its
-                        // recoverable. There are several ways we can do this. But its not important at this moment.
-                        //***********************************************************************************************
-                        //    1. Save a copy of the full file in an admin dir.
-                        //    2. List all data about hashes and blocks in a text file in the same dir.
-                        //    3. Log the time, date, and relavant info.
-                    }
-
-                    // If no collisions, then increment the use count and statistics.
-                    int null_recs = qpsql_incr_hash_count(block_hash);
-                    if (null_recs != 0) {
-                        ERROR("Record count not = 0 in incrementing a hash's use count.");
+                    if ( ! (data_block == block_in_DB) ) {
+                        q_FS::handle_a_collision();
+                    } else {
+                        //Update use count.
+                        int null_recs = qpsql_incr_hash_count(block_hash);
+                        if (null_recs != 0) {
+                            ERROR("Record count not = 0 in incrementing a hash's use count.");
+                        }
                     }
                 }
-
+                block_in_DB.clear();
             }
             // Find which hashes were modified and remove/alter as necessary.
             qfs_compare_existing_hashes( &hash_buffer );
@@ -498,12 +473,13 @@ extern Settings settings;
             DEBUG("Q_FUSE::qfs_write: End Hash Buffer: {}", hash_buffer);
             res = qfs_write_to_file( info->fh, hash_buffer.c_str(), hash_buffer.length(), offset );
             DEBUG("Q_FUSE::qfs_write: {} Bytes of data Written from buffer of length {} to qubeFS filename {} and filehandle {}.",
-                res, sizeof(buf), path, info->fh);
+                res, strlen(buf), path, info->fh);
         }
+
         offset = original_offset;
         TRACE("Q_FUSE::qfs_write---[Leaving]--->");
         FLUSH;
-        //return res;   // Fuse expects us to write the same data we recieved into this sub. :P
+        // Fuse expects us to write the same data we recieved into this sub. So, we return the entire size, not de-dupe size.
         return size;   
     }
 

@@ -68,6 +68,7 @@ const char *q_psql::use_decr = "";
         TRACE("Q_PSQL::qpsql_get_block_from_hash---hash: {}--->", hash);
         std::vector<uint8_t> data_block;
         PGresult *res;
+        data_block.clear();
 
         quoted_hash = qpsql_get_quoted_value(hash);
         char *quoted_sql = (char *) malloc(strlen(qu_sql) + quoted_hash.length() + 1);
@@ -102,10 +103,10 @@ const char *q_psql::use_decr = "";
         paramLengths[0] = data_block->size();
         paramFormats[0] = 1; // 1 means binary format
         PGresult *res;
-        int rows;
+        int rows = 0;
         
         char *quoted_sql = (char *) malloc(strlen(ins_sql) + quoted_hash.length() + quoted_count.length() + 1);
-        std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), "1" );
+        std::sprintf(quoted_sql, ins_sql, quoted_hash.c_str(), '1' );
 
         DEBUG("Q_PSQL::qpsql_insert_hash: INSERT QUERY = {}", quoted_sql);
         res = PQexecParams(conn, quoted_sql, 1, nullptr, paramValues, paramLengths, paramFormats, 0);

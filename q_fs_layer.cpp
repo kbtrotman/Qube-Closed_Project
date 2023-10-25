@@ -12,6 +12,7 @@
 // My shorthand crap may one day be the death of me.....
 
 #include "q_fs_layer.hpp"
+#include "q_convert.hpp"
 
 #undef TRACE
 #undef DEBUG
@@ -31,7 +32,6 @@
 
 std::shared_ptr<spdlog::logger> q_FS::_Qflog;
 extern Settings settings;
-
 
     q_FS::q_FS(q_log& q) {
         _Qflog = q.get_log_instance();
@@ -83,6 +83,32 @@ extern Settings settings;
         TRACE("Q_FS::qfs_write_to_file:---[Leaving]--->");
         FLUSH;
         return write_result;
+    }
+
+    std::vector<uint8_t>  q_FS::get_a_block_from_buffer( std::vector<uint8_t> in_buffer, int block_num ) {
+        TRACE("Q_FS::get_a_block_from_buffer: getting block number: {:d} from a buffer of length: {:d}", block_num, in_buffer.size());
+        static std::vector<uint8_t> cur_block;
+        cur_block.clear();
+        
+        cur_block = q_convert::substr_of_vect(in_buffer, block_num * BLOCK_SIZE, ((block_num + 1) * BLOCK_SIZE) );
+        TRACE("Q_FS::get_a_block_from_buffer: ---Leaving with block of size {:d}--------->", cur_block.size());
+        FLUSH;
+        return cur_block;
+    }
+
+    int q_FS::handle_a_collision( ) {
+        ERROR("Q_FUSE::qfs_write: Hash Colission! Hard Error. Saving data and working around the problem.");
+
+        //TODO: We don't allow collisions in this FS, so we deal with the error in a way that makes sense.
+        //***********************************************************************************************
+        // Most de-dupe platforms realize that a collision is less likely than filesystem corruption, but
+        // we want to at the least, log the event and note it. Also, we want to save the file in a way its
+        // recoverable. There are several ways we can do this. But its not important at this moment.
+        //***********************************************************************************************
+        //    1. Save a copy of the full file in an admin dir.
+        //    2. List all data about hashes and blocks in a text file in the same dir.
+        //    3. Log the time, date, and relavant info.
+        return 0;
     }
 
     int  q_FS::qfs_compare_existing_hashes(std::string *new_hashes) {

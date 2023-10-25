@@ -26,4 +26,5 @@ class q_convert {
         static std::vector<uint8_t> string2vect (std::string *str);
         static std::string vect2string(const std::vector<uint8_t>& vec);
         static std::vector<uint8_t> substr_of_char(const char *str, int start, int end);
+        static std::vector<uint8_t> substr_of_vect(std::vector<uint8_t> vect, int start, int end);
 };

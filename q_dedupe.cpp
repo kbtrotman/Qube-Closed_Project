@@ -12,7 +12,7 @@
 unsigned char q_dedupe::hash[SHA512_DIGEST_LENGTH] = {};
 std::stringstream q_dedupe::ss=std::stringstream{};
 
-    std::string q_dedupe::get_sha512_hash(const std::vector<uint8_t> v_str){
+    std::string q_dedupe::get_sha512_hash(std::vector<uint8_t> v_str){
         TRACE("q_hash::get_sha512_hash---[{}]--->", (char*)v_str.data());
         
         // We have static sections, so let's blank everything to be safe here.
@@ -29,6 +29,7 @@ std::stringstream q_dedupe::ss=std::stringstream{};
             ss << std::hex << std::setw(2) << std::setfill('0') << static_cast<int>( hash[i] );
         }
         TRACE("q_hash::get_sha512_hash---[Leaving]---with hash string---[{}]--->.", ss.str());
-
+        FLUSH;
+        v_str.clear();
         return ss.str();
     }

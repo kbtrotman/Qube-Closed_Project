@@ -58,6 +58,7 @@ extern Settings settings;
     }
     // Explicit instantiation for the types we expect to use here.
     template std::vector<uint8_t> q_convert::char2vect(char* str, size_t length);
+    template std::vector<uint8_t> q_convert::char2vect(const char* str, size_t length);
     template std::vector<uint8_t> q_convert::char2vect(unsigned char* str, size_t length);
 
     std::vector<uint8_t> q_convert::string2vect (std::string *str) {
@@ -72,12 +73,27 @@ extern Settings settings;
     }
 
     std::vector<uint8_t> q_convert::substr_of_char(const char *str, int start, int end) {
-        // Create a new vector as a substring of the original vector
+        TRACE("q_convert::substr_of_char: String in to convert: {:x}  from start={:d} to end={:d}.", str, start, end);
+        // Create a new vector as a substring of the original string.
         std::vector<uint8_t> substringVector;
 
         for (int i = start; i < (end - start); ++i) {
             substringVector.push_back( str[i] );
         }
+        TRACE("q_convert::substr_of_char: ---Leaving with vector = {:x}----->", (char *)substringVector.data());
+        return substringVector;
+    }
+
+    std::vector<uint8_t> q_convert::substr_of_vect(std::vector<uint8_t> vect, int start, int end) {
+        TRACE("q_convert::substr_of_char: String in to convert: from start={:d} to end={:d}.", start, end);
+        // Create a new vector as a substring of the original string.
+        std::vector<uint8_t> substringVector;
+
+        for (int i = start; i < (end - start); ++i) {
+            substringVector.push_back( vect[i] );
+        }
+        TRACE("q_convert::substr_of_char: ---Leaving with vector----->");
+        FLUSH;
         return substringVector;
     }
 
