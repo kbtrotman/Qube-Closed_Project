@@ -84,18 +84,19 @@ extern Settings settings;
         return substringVector;
     }
 
-    std::vector<uint8_t> q_convert::substr_of_vect(std::vector<uint8_t> vect, int start, int end) {
-        TRACE("q_convert::substr_of_char: String in to convert: from start={:d} to end={:d}.", start, end);
-        // Create a new vector as a substring of the original string.
-        std::vector<uint8_t> substringVector;
+std::vector<uint8_t> q_convert::substr_of_vect(std::vector<uint8_t> vect, int start, int end) {
+    TRACE("q_convert::substr_of_char: String in to convert: from start={:d} to end={:d}.", start, end-1);
+    // Create a new vector as a substring of the original string.
+    std::vector<uint8_t> substringVector;
 
-        for (int i = start; i < (end - start); ++i) {
-            substringVector.push_back( vect[i] );
-        }
-        TRACE("q_convert::substr_of_char: ---Leaving with vector----->");
-        FLUSH;
-        return substringVector;
+    // The loop should run from start to end, inclusive of start and exclusive of end.
+    for (int i = start; i < end; ++i) {
+        substringVector.push_back( vect[i] );
     }
+    TRACE("q_convert::substr_of_char: ---Leaving with vector of size = {}----->", substringVector.size());
+    FLUSH;
+    return substringVector;
+}
 
 /*
     static int vect_is_errorcode(std::vector<uint8_t> vec) {

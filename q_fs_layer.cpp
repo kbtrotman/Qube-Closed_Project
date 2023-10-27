@@ -9,11 +9,10 @@
 
 //Low-Level functions directly to FS.
 
-// My shorthand crap may one day be the death of me.....
-
 #include "q_fs_layer.hpp"
 #include "q_convert.hpp"
 
+// My shorthand crap may one day be the death of me.....
 #undef TRACE
 #undef DEBUG
 #undef INFO 
@@ -70,9 +69,6 @@ extern Settings settings;
         // Here we are writing only the hashes to the actual filesystem.
         int write_result;
 
-        //Seek to our writing offset point before doing anythign else
-        //::lseek(fd, offset, SEEK_SET);
-
         write_result = ::pwrite(fd, data_content, size, offset);
         if (write_result == -1) {
             DEBUG("Q_FS::qfs_Write_to_file: error writing to filehandle---[{:d}]--->", fd);
@@ -83,6 +79,25 @@ extern Settings settings;
         TRACE("Q_FS::qfs_write_to_file:---[Leaving]--->");
         FLUSH;
         return write_result;
+    }
+
+    std::string q_FS::qfs_read_from_file(int fd, int buffer_num, size_t size, off_t offset) {
+        TRACE("Q_FS::qfs_read_from_file:---[Entering]---with fd = {}, buffer_num = {}, size = {}>", fd, buffer_num, size);
+        char in_buffer[HASH_SIZE + 1] = {0}; // allocate memory for in_buffer
+        std::string str = "";
+        ::lseek(fd, (offset + (buffer_num * HASH_SIZE)), SEEK_SET);
+
+        ssize_t res = ::read(fd, in_buffer, HASH_SIZE);
+        if (res == -1) {
+            ERROR("Q_FUSE:qfs_read: error reading from provided file handle {:d}.", fd);
+        } else {
+            str = q_convert::char2string(in_buffer);
+        }
+
+        TRACE("Q_FS::qfs_read_from_file:---[Leaving]---with hash = {}>", str);
+        FLUSH;
+
+        return str;
     }
 
     std::vector<uint8_t>  q_FS::get_a_block_from_buffer( std::vector<uint8_t> in_buffer, int block_num ) {

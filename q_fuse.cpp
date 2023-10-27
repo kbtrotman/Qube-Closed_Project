@@ -346,63 +346,35 @@ extern Settings settings;
     }
 
     int q_fuse::qfs_read( const char *path, char *buffer, size_t size, off_t offset, struct fuse_file_info *fi ) {
-        TRACE("Q_FUSE:qfs_read---[{}]--->", path );
+        TRACE("Q_FUSE:qfs_read---[{}]---[{:d}]--->", path, size );
         int fd;
-        int res;
-        int num_in_a_partial = size % 4096;
-        int num_of_hashes = size / 4096;
-        int original_offset;
-        int original_size;
-        char tmpbuffer[HASH_SIZE];
+        int num_of_hashes;
+        if (size ==0) {num_of_hashes = 0;} else {num_of_hashes = size / BLOCK_SIZE;} //just in case of a divide-by-zero error.
+        std::string hash;
         std::vector<uint8_t> tmp_block;
         std::vector<uint8_t> actual_contents;
 
-        if (num_in_a_partial > 0) { num_of_hashes++; }
         fd = fi->fh;
+        offset = (offset/BLOCK_SIZE) * HASH_SIZE;
 
         // Change our hashes in the file into blocks from the DB....
-        original_offset = offset;
-        original_size = size;
-        offset = ((original_offset / 4096) * (HASH_SIZE));
-        ::lseek(fd, offset, SEEK_SET);
-        
-
         for (int i=0; i < num_of_hashes; i++) {
-            DEBUG("Interation thru loop: {}, fd {}, tmpbuffer {}, offset + (i * HASHSIZE) {}", i, fd, tmpbuffer, ( offset + (i * HASH_SIZE )));
-            FLUSH;
-
-            res = pread(fd, tmpbuffer, HASH_SIZE, offset + (i * HASH_SIZE));
-            if (res == -1) {
-                ERROR("Q_FUSE:qfs_read: error reading from provided file handle {:d}.", fd);
-                res = -errno;
-                return 0;
-            }
-
-            DEBUG("Q_FUSE:qfs_read: read {} bytes into temp buffer from filehandle {:d}, # of hashes {:d}.", strlen(tmpbuffer), fd, (strlen(tmpbuffer) / HASH_SIZE));
-            FLUSH;
-            tmp_block = qpsql_get_block_from_hash(tmpbuffer);
+            DEBUG("Interation thru loop: {}, fd {}, offset + (i * HASHSIZE) {}", i, fd, ( offset + (i * HASH_SIZE )));
+            hash = q_FS::qfs_read_from_file(fd, i, HASH_SIZE, offset);
+            DEBUG("Q_FUSE:qfs_read: read {} bytes into temp buffer from filehandle {:d}, hash {}.", HASH_SIZE, fd, hash );
+            tmp_block = qpsql_get_block_from_hash(hash);
             DEBUG("Q_FUSE:qfs_read: tmp_block size: {}>>> actual_contents size: {}", tmp_block.size(), actual_contents.size());
-            FLUSH;
             actual_contents.insert(actual_contents.end(), tmp_block.begin(), tmp_block.end());
             DEBUG("Q_FUSE:qfs_read: tmp_block size: {}>>> actual_contents size: {}", tmp_block.size(), actual_contents.size());
             FLUSH;
-            memset(tmpbuffer, 0, sizeof(tmpbuffer));
+
+            hash.clear();
             tmp_block.clear();
         }
 
-        size = original_size;
-        offset = original_offset;
-        DEBUG("Q_FUSE:qfs_read: data read to buffer with filehandle {:d}, actual data size is: {}, writing to buffer size {}.", fd, actual_contents.size(), sizeof(buffer));
-        FLUSH;
-        if (sizeof(buffer) >= actual_contents.size()) {
-            memcpy(buffer, actual_contents.data(), actual_contents.size());
-            return actual_contents.size();
-        } else {
-            // Handle buffer too small error
-            // ...
-            CRITICAL("READ BUFFER is too small for the amount of data returned in the 4096 block size! This should never happen as it causes a system error if I fill the buffer of that size and filesystem will abort hard!");
-        }
-        TRACE("Q_FUSE::qfs_read---[Leaving]--->");
+        DEBUG("Q_FUSE:qfs_read: data read to buffer with filehandle {:d}, actual data size is: {}, writing to buffer size {}.", fd, actual_contents.size(),strlen(buffer));
+        memcpy(buffer, actual_contents.data(), actual_contents.size());
+        TRACE("Q_FUSE::qfs_read---[Leaving]---returning buffer size = {}--->", actual_contents.size());
         FLUSH;
         return actual_contents.size();
     }
@@ -427,8 +399,8 @@ extern Settings settings;
         } else {
             //# Generate the hash
             //#####################                                                        
-            DEBUG("Q_FUSE::qfs_write: There are {:d} buffers in the data stream, including {:d} bytes in a fractional buffer with offset = {:d}.", numBuffers, fracBuffers, offset);
-            DEBUG("Q_FUSE::qfs_Write: Incoming full path: {}---buffer: {:o}--- and buffer length: {}--->", last_full_path, (char *)in_buffer.data(), size);
+            DEBUG("Q_FUSE::qfs_write: {:d} sub-buffers in the buffer, including {:d} bytes in a fractional buffer with offset = {:d}.", numBuffers, fracBuffers, offset);
+            DEBUG("Q_FUSE::qfs_Write: Incoming full path: {}---buffer: {:x}--- and buffer length: {}--->", last_full_path, buf, size);
 
             for (int i=0; i < (numBuffers); i++) {
                 std::vector<uint8_t> data_block;
