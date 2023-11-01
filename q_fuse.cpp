@@ -20,7 +20,7 @@ q_log& qlog = q_log::getInstance();
 std::shared_ptr<spdlog::logger> _Qlog = nullptr;
 extern Settings settings;
 
-    q_fuse::q_fuse(q_log& q) : q_dedupe(q), q_FS(q) {
+    q_fuse::q_fuse(q_log& q) : q_dedupe(q), hiv_FS(q) {
         // set the methods of the fuse_operations struct to the methods of the QubeFileSystem class
         qfs_operations_.getattr         = &q_fuse::qfs_getattr;
         qfs_operations_.readlink        = &q_fuse::qfs_readlink;
@@ -361,7 +361,7 @@ extern Settings settings;
         // Change our hashes in the file into blocks from the DB....
         for (int i=0; i < num_of_hashes; i++) {
             DEBUG("Q_FUSE:qfs_read: Interation thru loop: {}, fd {}, offset + (i * HASHSIZE) {}", i, fd, ( offset + (i * HASH_SIZE )));
-            hash = q_FS::qfs_read_from_file(fd, i, HASH_SIZE, offset);
+            hash = hiv_FS::qfs_read_from_file(fd, i, HASH_SIZE, offset);
             DEBUG("Q_FUSE:qfs_read: read {} bytes into temp buffer from filehandle {:d}, hash {}.", HASH_SIZE, fd, hash );
             tmp_block = qpsql_get_block_from_hash(hash);
             DEBUG("Q_FUSE:qfs_read: tmp_block size: {}>>> actual_contents size: {}", tmp_block.size(), actual_contents.size());
@@ -405,7 +405,7 @@ extern Settings settings;
 
             for (int i=0; i < (numBuffers); i++) {
                 std::vector<uint8_t> data_block;
-                data_block = q_FS::get_a_block_from_buffer(in_buffer, i);
+                data_block = hiv_FS::get_a_block_from_buffer(in_buffer, i);
                 block_hash.clear();
                 block_hash = q_dedupe::get_sha512_hash(data_block);
                 //# END: Generate the hash
@@ -428,7 +428,7 @@ extern Settings settings;
                 } else {
                     // Handle Collisions: Hash does exist, check if the data block in the DB is the same...
                     if ( ! (data_block == block_in_DB) ) {
-                        q_FS::handle_a_collision();
+                        hiv_FS::handle_a_collision();
                     } else {
                         //Update use count.
                         int null_recs = qpsql_incr_hash_count(block_hash);

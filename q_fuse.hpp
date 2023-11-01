@@ -19,11 +19,11 @@
 #endif
 
 #include "qube.hpp"
-#include "q_fs_layer.hpp"
+#include "hiv_fs_layer.hpp"
 #include "q_dedupe.hpp"
 #include "q_log.hpp"
 
-class q_fuse : public fuse_operations, public q_dedupe , public q_FS {
+class q_fuse : public fuse_operations, public q_dedupe , public hiv_FS {
 
 	public:
 		static struct fuse_args args;

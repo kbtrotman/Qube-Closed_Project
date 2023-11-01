@@ -29,15 +29,52 @@
 #define CRITICAL _Qflog->critical
 #define FLUSH  _Qflog->flush()
 
-std::shared_ptr<spdlog::logger> q_FS::_Qflog;
+std::shared_ptr<spdlog::logger> hiv_FS::_Qflog;
 extern Settings settings;
 
-    q_FS::q_FS(q_log& q) {
+    hiv_FS::hiv_FS(q_log& q) {
         _Qflog = q.get_log_instance();
     }
 
+    static void __exit dummy_exit(void)
+    {
+	    int ret;
+
+	    ret = unregister_filesystem(&dummyfs_type);
+	    kmem_cache_destroy(dmy_inode_cache);
+
+	    if (!ret)
+		    printk(KERN_INFO "Unregister dummy FS success\n");
+	    else
+		    printk(KERN_ERR "Failed to unregister dummy FS\n");
+
+    }
+    module_exit(dummy_exit);
+
+    static int __init dummy_init(void)
+    {
+	    int ret = 0;
+
+	    dmy_inode_cache = kmem_cache_create("dmy_inode_cache", sizeof(struct dm_inode), 0,
+					(SLAB_RECLAIM_ACCOUNT| SLAB_MEM_SPREAD), NULL);
+
+	    if (!dmy_inode_cache)
+		    return -ENOMEM;
+
+	    ret = register_filesystem(&dummyfs_type);
+
+	    if (ret == 0)
+		    printk(KERN_INFO "Sucessfully registered dummyfs\n");
+	    else
+		    printk(KERN_ERR "Failed to register dummyfs. Error code: %d\n", ret);
+
+	    return ret;
+    }
+
+    module_init(dummy_init);
+
     // All globally static methods below this point. They are interrupt-driven......
-    char*  q_FS::qfs_get_root_path(const char* path) {
+    char*  hiv_FS::qfs_get_root_path(const char* path) {
         TRACE("Q_FS::qfs_get_root_path---[path = {}]---[root: {}]--->", path, settings.root_dir->c_str());
 
         std::string s(path);
@@ -64,7 +101,7 @@ extern Settings settings;
         return ftemp;
     }
 
-    int q_FS::qfs_write_to_file( int fd, const char *data_content, size_t size, off_t offset ) {
+    int hiv_FS::qfs_write_to_file( int fd, const char *data_content, size_t size, off_t offset ) {
         TRACE("Q_FS::qfs_Write_to_file---[{:d}]---[{}]---[{:d}]>", fd, data_content, size, offset);
         // Here we are writing only the hashes to the actual filesystem.
         int write_result;
@@ -81,7 +118,7 @@ extern Settings settings;
         return write_result;
     }
 
-    std::string q_FS::qfs_read_from_file(int fd, int buffer_num, size_t size, off_t offset) {
+    std::string hiv_FS::qfs_read_from_file(int fd, int buffer_num, size_t size, off_t offset) {
         TRACE("Q_FS::qfs_read_from_file:---[Entering]---with fd = {}, buffer_num = {}, size = {}>", fd, buffer_num, size);
         char in_buffer[HASH_SIZE + 1] = {0}; // allocate memory for in_buffer
         std::string str = "";
@@ -100,7 +137,7 @@ extern Settings settings;
         return str;
     }
 
-    std::vector<uint8_t>  q_FS::get_a_block_from_buffer( std::vector<uint8_t> in_buffer, int block_num ) {
+    std::vector<uint8_t>  hiv_FS::get_a_block_from_buffer( std::vector<uint8_t> in_buffer, int block_num ) {
         TRACE("Q_FS::get_a_block_from_buffer: getting block number: {:d} from a buffer of length: {:d}", block_num, in_buffer.size());
         static std::vector<uint8_t> cur_block;
         cur_block.clear();
@@ -111,7 +148,7 @@ extern Settings settings;
         return cur_block;
     }
 
-    int q_FS::handle_a_collision( ) {
+    int hiv_FS::handle_a_collision( ) {
         ERROR("Q_FUSE::qfs_write: Hash Colission! Hard Error. Saving data and working around the problem.");
 
         //TODO: We don't allow collisions in this FS, so we deal with the error in a way that makes sense.
@@ -126,7 +163,7 @@ extern Settings settings;
         return 0;
     }
 
-    int  q_FS::qfs_compare_existing_hashes(std::string *new_hashes) {
+    int  hiv_FS::qfs_compare_existing_hashes(std::string *new_hashes) {
         // ###########TBD##########
         // COMPARE ORIGINAL FILE HASHES TO THE HASES NOW. IF FILE CHANGED, DECREMENT UN-USED HASH COUNTS.
         // Could be an expensive search when used with locking for multiple edits. Need to examine.
