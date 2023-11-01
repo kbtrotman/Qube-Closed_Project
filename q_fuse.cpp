@@ -330,7 +330,8 @@ extern Settings settings;
 
         last_full_path = qfs_get_root_path(path);
         DEBUG("Q_FUSE::qfs_open: Fullpath={} and path={}.", last_full_path, path);
-
+        fi->direct_io = 1;
+        
         local_fh = ::open(last_full_path, fi->flags);
         if (local_fh == -1){
             ERROR("Q_FUSE::qfs_create: Failed to open path [{}] with flags [{:d}].", path, fi->flags);
@@ -349,7 +350,7 @@ extern Settings settings;
         TRACE("Q_FUSE:qfs_read---[{}]---[{:d}]--->", path, size );
         int fd;
         int num_of_hashes;
-        if (size ==0) {num_of_hashes = 0;} else {num_of_hashes = size / BLOCK_SIZE;} //just in case of a divide-by-zero error.
+        if (size ==0) {num_of_hashes = 0;} else {num_of_hashes = size / HASH_SIZE;} //just in case of a divide-by-zero error.
         std::string hash;
         std::vector<uint8_t> tmp_block;
         std::vector<uint8_t> actual_contents;
@@ -359,7 +360,7 @@ extern Settings settings;
 
         // Change our hashes in the file into blocks from the DB....
         for (int i=0; i < num_of_hashes; i++) {
-            DEBUG("Interation thru loop: {}, fd {}, offset + (i * HASHSIZE) {}", i, fd, ( offset + (i * HASH_SIZE )));
+            DEBUG("Q_FUSE:qfs_read: Interation thru loop: {}, fd {}, offset + (i * HASHSIZE) {}", i, fd, ( offset + (i * HASH_SIZE )));
             hash = q_FS::qfs_read_from_file(fd, i, HASH_SIZE, offset);
             DEBUG("Q_FUSE:qfs_read: read {} bytes into temp buffer from filehandle {:d}, hash {}.", HASH_SIZE, fd, hash );
             tmp_block = qpsql_get_block_from_hash(hash);
@@ -374,7 +375,7 @@ extern Settings settings;
 
         DEBUG("Q_FUSE:qfs_read: data read to buffer with filehandle {:d}, actual data size is: {}, writing to buffer size {}.", fd, actual_contents.size(),strlen(buffer));
         memcpy(buffer, actual_contents.data(), actual_contents.size());
-        TRACE("Q_FUSE::qfs_read---[Leaving]---returning buffer size = {}--->", actual_contents.size());
+        TRACE("Q_FUSE::qfs_read---[Leaving]---[returning buffer size = {}]--->", actual_contents.size());
         FLUSH;
         return actual_contents.size();
     }

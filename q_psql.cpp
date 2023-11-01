@@ -65,7 +65,7 @@ const char *q_psql::use_decr = "";
 
     std::vector<uint8_t> q_psql::qpsql_get_block_from_hash(std::string hash) {
         //SELECT a data block from the DB given a hash value....
-        TRACE("Q_PSQL::qpsql_get_block_from_hash---hash: {}--->", hash);
+        TRACE("Q_PSQL::qpsql_get_block_from_hash---[Entering]---hash: {}--->", hash);
         std::vector<uint8_t> data_block;
         PGresult *res;
         data_block.clear();

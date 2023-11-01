@@ -29,8 +29,14 @@
     std::shared_ptr<spdlog::logger> q_log::get_log_instance() {
 
         if (_qlog == nullptr){
-            auto file_sink = std::make_shared<spdlog::sinks::daily_file_sink_st>("/var/log/qube.log", 23, 59);
+            //auto file_sink = std::make_shared<spdlog::sinks::daily_file_sink_st>("/var/log/qube.log", 23, 59);
+            //_qlog = std::make_shared<spdlog::logger>("q_log", file_sink);
+            auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("/var/log/qube.log");
             _qlog = std::make_shared<spdlog::logger>("q_log", file_sink);
+
+            // Set the logging pattern (optional)
+            spdlog::set_pattern("[%H:%M:%S] [%l] %v");
+
             exStatus = 0;
 
             _qlog->set_level(spdlog::level::trace);
