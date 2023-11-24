@@ -6,10 +6,17 @@ Qube-FS Filesystem
 ------------------
 
 Qube software is:
-Qube was intended to be a backup filesystem with the emphasis on de-dupe. I was going to add additional 
+Qube is a fuse-based backup filesystem with the emphasis on de-dupe. I was going to add additional 
 functions, but I ran into a point where using fuse was detrimental to the functionality I wanted to add, 
 so I closed the project. At the point where I closed this project there was still a single bug remaining.
 The bug is that when storing files, and then retrieving them, I switched to vectors since it was c++, and
 somewhere in the conversions, the uint8_t format was getting scrambled. I will probably return and fix that, 
 but at present, what I was really trying to do was too much for fuse, so I began a new project with the code
 that I wanted to continue developing. So, this project is closed and I won't develop new functionality for it.
+
+In retrospect, I used vectors because there were points where string comparisons were necessary, and strings
+don't have sufficient supprt for filesystem uint8_t format. However, if I had to do it over, I belive I would
+devolve everythign to C-style char[] strings instead, whcih also support utint8_t. It would've been better and 
+would've made the bug I had remaining irrelevant. Live and learn. I am spending a lot of time on another
+personal project right now, however, so it will some time before I return to this, simply because at present,
+I'm the only one that cares about this code. So, it's just not a priority.
